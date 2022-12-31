@@ -1,0 +1,329 @@
+<div style="width:400px; height:400px;">
+  <canvas id="myChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const ctx = document.getElementById('myChart');
+
+
+  /*
+  The following comes from the output of this query: 
+
+  sudo -u postgres psql -d synapse -c "SELECT     t.tablename,     indexname,     c.reltuples AS num_rows,     pg_size_pretty(pg_relation_size(quote_ident(t.tablename)::text)) AS table_size,     pg_size_pretty(pg_relation_size(quote_ident(indexrelname)::text)) AS index_size,     CASE WHEN indisunique THEN 'Y'        ELSE 'N'     END AS UNIQUE,     idx_scan AS number_of_scans,     idx_tup_read AS tuples_read,     idx_tup_fetch AS tuples_fetched FROM pg_tables t LEFT OUTER JOIN pg_class c ON t.tablename=c.relname LEFT OUTER JOIN     ( SELECT c.relname AS ctablename, ipg.relname AS indexname, x.indnatts AS number_of_columns, idx_scan, idx_tup_read, idx_tup_fetch, indexrelname, indisunique FROM pg_index x            JOIN pg_class c ON c.oid = x.indrelid            JOIN pg_class ipg ON ipg.oid = x.indexrelid            JOIN pg_stat_all_indexes psai ON x.indexrelid = psai.indexrelid )     AS foo     ON t.tablename = foo.ctablename WHERE t.schemaname='public' ORDER BY 1,2;" > tablesize.txt
+
+  */
+
+  const tableSizeOutput = ` access_tokens                             | access_tokens_device_id                                         |          1317 | 344 kB     | 104 kB     | N      |               0 |           0 |              0
+ account_data                              | account_data_stream_id                                          |          1703 | 608 kB     | 264 kB     | N      |               0 |           0 |              0
+ account_validity                          | account_validity_pkey                                           |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ application_services_state                | application_services_state_pkey                                 |             3 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ applied_module_schemas                    | applied_module_schemas_module_name_file_key                     |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ applied_schema_deltas                     | applied_schema_deltas_version_file_key                          |           161 | 16 kB      | 32 kB      | Y      |               0 |           0 |              0
+ appservice_room_list                      | appservice_room_list_idx                                        |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ appservice_stream_position                | appservice_stream_position_lock_key                             |             1 | 40 kB      | 16 kB      | Y      |               0 |           0 |              0
+ background_updates                        | background_updates_uniqueness                                   |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ batch_events                              | batch_events_batch_id                                           |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ batch_events                              | batch_events_room_id                                            |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ batch_events                              | chunk_events_event_id                                           |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ blocked_rooms                             | blocked_rooms_idx                                               |           115 | 64 kB      | 16 kB      | Y      |               0 |           0 |              0
+ cache_invalidation_stream_by_instance     | cache_invalidation_stream_by_instance_id                        | 2.4105604e+07 | 3911 MB    | 557 MB     | Y      |               0 |           0 |              0
+ cache_invalidation_stream_by_instance     | cache_invalidation_stream_by_instance_instance_index            | 2.4105604e+07 | 3911 MB    | 782 MB     | N      |               0 |           0 |              0
+ current_state_delta_stream                | current_state_delta_stream_idx                                  |  4.822793e+06 | 834 MB     | 60 MB      | N      |               0 |           0 |              0
+ current_state_events                      | current_state_events_event_id_key                               |        626697 | 105 MB     | 68 MB      | Y      |               0 |           0 |              0
+ current_state_events                      | current_state_events_member_index                               |        626697 | 105 MB     | 22 MB      | N      |               0 |           0 |              0
+ current_state_events                      | current_state_events_room_id_type_state_key_key                 |        626697 | 105 MB     | 74 MB      | Y      |               0 |           0 |              0
+ dehydrated_devices                        | dehydrated_devices_pkey                                         |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ deleted_pushers                           | deleted_pushers_stream_id                                       |           153 | 32 kB      | 16 kB      | N      |               0 |           0 |              0
+ destination_rooms                         | destination_rooms_pkey                                          |         37292 | 4880 kB    | 3552 kB    | Y      |               0 |           0 |              0
+ destination_rooms                         | destination_rooms_room_id                                       |         37292 | 4880 kB    | 608 kB     | N      |               0 |           0 |              0
+ destinations                              | destinations_pkey                                               |         13488 | 1320 kB    | 456 kB     | Y      |               0 |           0 |              0
+ device_auth_providers                     | device_auth_providers_devices                                   |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ device_auth_providers                     | device_auth_providers_sessions                                  |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ device_federation_inbox                   | device_federation_inbox_sender_id                               |        170234 | 13 MB      | 8672 kB    | N      |               0 |           0 |              0
+ device_federation_outbox                  | device_federation_outbox_destination_id                         |          9318 | 6144 kB    | 464 kB     | N      |               0 |           0 |              0
+ device_federation_outbox                  | device_federation_outbox_id                                     |          9318 | 6144 kB    | 232 kB     | N      |               0 |           0 |              0
+ device_inbox                              | device_inbox_stream_id_user_id                                  |        348472 | 341 MB     | 7840 kB    | N      |               0 |           0 |              0
+ device_inbox                              | device_inbox_user_stream_id                                     |        348472 | 341 MB     | 31 MB      | N      |               0 |           0 |              0
+ device_lists_changes_in_room              | device_lists_changes_in_stream_id                               | 1.0149355e+07 | 1134 MB    | 630 MB     | Y      |               0 |           0 |              0
+ device_lists_changes_in_room              | device_lists_changes_in_stream_id_unconverted                   | 1.0149355e+07 | 1134 MB    | 16 kB      | N      |               0 |           0 |              0
+ device_lists_outbound_last_success        | device_lists_outbound_last_success_unique_idx                   |         49089 | 4744 kB    | 3176 kB    | Y      |               0 |           0 |              0
+ device_lists_outbound_pokes               | device_lists_outbound_pokes_id                                  |         22377 | 3176 kB    | 1832 kB    | N      |               0 |           0 |              0
+ device_lists_outbound_pokes               | device_lists_outbound_pokes_stream                              |         22377 | 3176 kB    | 1128 kB    | N      |               0 |           0 |              0
+ device_lists_outbound_pokes               | device_lists_outbound_pokes_user                                |         22377 | 3176 kB    | 2424 kB    | N      |               0 |           0 |              0
+ device_lists_remote_cache                 | device_lists_remote_cache_unique_id                             |        503803 | 373 MB     | 37 MB      | Y      |               0 |           0 |              0
+ device_lists_remote_extremeties           | device_lists_remote_extremeties_unique_idx                      |        134180 | 11 MB      | 5792 kB    | Y      |               0 |           0 |              0
+ device_lists_remote_resync                | device_lists_remote_resync_idx                                  |         17886 | 1336 kB    | 888 kB     | Y      |               0 |           0 |              0
+ device_lists_remote_resync                | device_lists_remote_resync_ts_idx                               |         17886 | 1336 kB    | 440 kB     | N      |               0 |           0 |              0
+ device_lists_stream                       | device_lists_stream_id                                          |  1.281681e+06 | 112 MB     | 104 MB     | N      |               0 |           0 |              0
+ device_lists_stream                       | device_lists_stream_user_id                                     |  1.281681e+06 | 112 MB     | 96 MB      | N      |               0 |           0 |              0
+ devices                                   | device_uniqueness                                               |          2199 | 1088 kB    | 224 kB     | Y      |               0 |           0 |              0
+ e2e_cross_signing_keys                    | e2e_cross_signing_keys_idx                                      |  1.322381e+06 | 558 MB     | 81 MB      | Y      |               0 |           0 |              0
+ e2e_cross_signing_keys                    | e2e_cross_signing_keys_stream_idx                               |  1.322381e+06 | 558 MB     | 29 MB      | Y      |               0 |           0 |              0
+ e2e_cross_signing_signatures              | e2e_cross_signing_signatures2_idx                               |          2193 | 520 kB     | 152 kB     | N      |               0 |           0 |              0
+ e2e_device_keys_json                      | e2e_device_keys_json_uniqueness                                 |           876 | 480 kB     | 72 kB      | Y      |               0 |           0 |              0
+ e2e_fallback_keys_json                    | e2e_fallback_keys_json_uniqueness                               |           563 | 200 kB     | 80 kB      | Y      |               0 |           0 |              0
+ e2e_one_time_keys_json                    | e2e_one_time_keys_json_uniqueness                               |         33272 | 12 MB      | 3192 kB    | Y      |               0 |           0 |              0
+ e2e_room_keys                             | e2e_room_keys_with_version_idx                                  |         60017 | 56 MB      | 9488 kB    | Y      |               0 |           0 |              0
+ e2e_room_keys_versions                    | e2e_room_keys_versions_idx                                      |           233 | 136 kB     | 32 kB      | Y      |               0 |           0 |              0
+ erased_users                              | erased_users_user                                               |            20 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ event_auth                                | evauth_edges_id                                                 | 1.0326501e+07 | 2166 MB    | 408 MB     | N      |               0 |           0 |              0
+ event_auth_chain_links                    | event_auth_chain_links_idx                                      |  7.426941e+06 | 597 MB     | 293 MB     | N      |               0 |           0 |              0
+ event_auth_chain_to_calculate             | event_auth_chain_to_calculate_pkey                              |           322 | 216 kB     | 112 kB     | Y      |               0 |           0 |              0
+ event_auth_chain_to_calculate             | event_auth_chain_to_calculate_rm_id                             |           322 | 216 kB     | 40 kB      | N      |               0 |           0 |              0
+ event_auth_chains                         | event_auth_chains_c_seq_index                                   |  3.058963e+06 | 386 MB     | 138 MB     | Y      |               0 |           0 |              0
+ event_auth_chains                         | event_auth_chains_pkey                                          |  3.058963e+06 | 386 MB     | 276 MB     | Y      |               0 |           0 |              0
+ event_backward_extremities                | ev_b_extrem_id                                                  |           602 | 144 kB     | 120 kB     | N      |               0 |           0 |              0
+ event_backward_extremities                | ev_b_extrem_room                                                |           602 | 144 kB     | 72 kB      | N      |               0 |           0 |              0
+ event_backward_extremities                | event_backward_extremities_event_id_room_id_key                 |           602 | 144 kB     | 216 kB     | Y      |               0 |           0 |              0
+ event_edges                               | ev_edges_prev_id                                                |  5.260516e+06 | 1086 MB    | 664 MB     | N      |               0 |           0 |              0
+ event_edges                               | event_edges_event_id_prev_event_id_idx                          |  5.260516e+06 | 1086 MB    | 1160 MB    | Y      |               0 |           0 |              0
+ event_expiry                              | event_expiry_expiry_ts_idx                                      |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ event_expiry                              | event_expiry_pkey                                               |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ event_failed_pull_attempts                | event_failed_pull_attempts_pkey                                 |         49439 | 9376 kB    | 7816 kB    | Y      |               0 |           0 |              0
+ event_failed_pull_attempts                | event_failed_pull_attempts_room_id                              |         49439 | 9376 kB    | 616 kB     | N      |               0 |           0 |              0
+ event_forward_extremities                 | ev_extrem_id                                                    |          3298 | 728 kB     | 744 kB     | N      |               0 |           0 |              0
+ event_forward_extremities                 | ev_extrem_room                                                  |          3298 | 728 kB     | 432 kB     | N      |               0 |           0 |              0
+ event_forward_extremities                 | event_forward_extremities_event_id_room_id_key                  |          3298 | 728 kB     | 1248 kB    | Y      |               0 |           0 |              0
+ event_json                                | event_json_event_id_key                                         |  5.055227e+06 | 8157 MB    | 676 MB     | Y      |               0 |           0 |              0
+ event_labels                              | event_labels_pkey                                               |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ event_labels                              | event_labels_room_id_label_idx                                  |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ event_push_actions                        | event_id_user_id_profile_tag_uniqueness                         |         20829 | 33 MB      | 48 MB      | Y      |               0 |           0 |              0
+ event_push_actions                        | event_push_actions_highlights_index                             |         20829 | 33 MB      | 480 kB     | N      |               0 |           0 |              0
+ event_push_actions                        | event_push_actions_rm_tokens                                    |         20829 | 33 MB      | 37 MB      | N      |               0 |           0 |              0
+ event_push_actions                        | event_push_actions_room_id_user_id                              |         20829 | 33 MB      | 2336 kB    | N      |               0 |           0 |              0
+ event_push_actions                        | event_push_actions_stream_highlight_index                       |         20829 | 33 MB      | 1776 kB    | N      |               0 |           0 |              0
+ event_push_actions                        | event_push_actions_stream_ordering                              |         20829 | 33 MB      | 18 MB      | N      |               0 |           0 |              0
+ event_push_actions                        | event_push_actions_u_highlight                                  |         20829 | 33 MB      | 21 MB      | N      |               0 |           0 |              0
+ event_push_actions_staging                | event_push_actions_staging_id                                   |             0 | 88 kB      | 304 kB     | N      |               0 |           0 |              0
+ event_push_summary                        | event_push_summary_unique_index                                 |          3143 | 1792 kB    | 472 kB     | Y      |               0 |           0 |              0
+ event_push_summary                        | event_push_summary_unique_index2                                |          3143 | 1792 kB    | 520 kB     | Y      |               0 |           0 |              0
+ event_push_summary_last_receipt_stream_id | event_push_summary_last_receipt_stream_id_lock_key              |             1 | 24 kB      | 16 kB      | Y      |               0 |           0 |              0
+ event_push_summary_stream_ordering        | event_push_summary_stream_ordering_lock_key                     |             1 | 24 kB      | 16 kB      | Y      |               0 |           0 |              0
+ event_relations                           | event_relations_id                                              |        156643 | 30 MB      | 23 MB      | Y      |               0 |           0 |              0
+ event_relations                           | event_relations_relates                                         |        156643 | 30 MB      | 23 MB      | N      |               0 |           0 |              0
+ event_reports                             | event_reports_pkey                                              |            24 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ event_search                              | event_search_ev_ridx                                            |  1.852867e+06 | 659 MB     | 21 MB      | N      |               0 |           0 |              0
+ event_search                              | event_search_event_id_idx                                       |  1.852867e+06 | 659 MB     | 265 MB     | Y      |               0 |           0 |              0
+ event_search                              | event_search_fts_idx                                            |  1.852867e+06 | 659 MB     | 165 MB     | N      |               0 |           0 |              0
+ event_to_state_groups                     | event_to_state_groups_event_id_key                              |  2.414017e+06 | 272 MB     | 340 MB     | Y      |               0 |           0 |              0
+ event_to_state_groups                     | event_to_state_groups_sg_index                                  |  2.414017e+06 | 272 MB     | 35 MB      | N      |               0 |           0 |              0
+ event_txn_id                              | event_txn_id_event_id                                           |           288 | 96 kB      | 168 kB     | Y      |               0 |           0 |              0
+ event_txn_id                              | event_txn_id_ts                                                 |           288 | 96 kB      | 72 kB      | N      |               0 |           0 |              0
+ event_txn_id                              | event_txn_id_txn_id                                             |           288 | 96 kB      | 400 kB     | Y      |               0 |           0 |              0
+ events                                    | event_contains_url_index                                        |  5.037872e+06 | 1655 MB    | 4672 kB    | N      |               0 |           0 |              0
+ events                                    | events_event_id_key                                             |  5.037872e+06 | 1655 MB    | 684 MB     | Y      |               0 |           0 |              0
+ events                                    | events_order_room                                               |  5.037872e+06 | 1655 MB    | 547 MB     | N      |               0 |           0 |              0
+ events                                    | events_room_stream                                              |  5.037872e+06 | 1655 MB    | 482 MB     | N      |               0 |           0 |              0
+ events                                    | events_stream_ordering                                          |  5.037872e+06 | 1655 MB    | 168 MB     | Y      |               0 |           0 |              0
+ events                                    | events_ts                                                       |  5.037872e+06 | 1655 MB    | 233 MB     | N      |               0 |           0 |              0
+ ex_outlier_stream                         | ex_outlier_stream_pkey                                          |        122198 | 13 MB      | 2888 kB    | Y      |               0 |           0 |              0
+ federation_inbound_events_staging         | federation_inbound_events_staging_instance_event                |             0 | 944 kB     | 264 kB     | Y      |               0 |           0 |              0
+ federation_inbound_events_staging         | federation_inbound_events_staging_room                          |             0 | 944 kB     | 240 kB     | N      |               0 |           0 |              0
+ federation_stream_position                | federation_stream_position_instance                             |             2 | 48 kB      | 16 kB      | Y      |               0 |           0 |              0
+ ignored_users                             | ignored_users_ignored_user_id                                   |            25 | 8192 bytes | 16 kB      | N      |               0 |           0 |              0
+ ignored_users                             | ignored_users_uniqueness                                        |            25 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ insertion_event_edges                     | insertion_event_edges_event_id                                  |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ insertion_event_edges                     | insertion_event_edges_insertion_prev_event_id                   |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ insertion_event_edges                     | insertion_event_edges_insertion_room_id                         |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ insertion_event_extremities               | insertion_event_extremities_event_id                            |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ insertion_event_extremities               | insertion_event_extremities_room_id                             |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ insertion_events                          | insertion_events_event_id                                       |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ insertion_events                          | insertion_events_next_batch_id                                  |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ insertion_events                          | insertion_events_room_id                                        |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ instance_map                              | instance_map_idx                                                |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ instance_map                              | instance_map_pkey                                               |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ local_current_membership                  | local_current_membership_idx                                    |          7087 | 1152 kB    | 680 kB     | Y      |               0 |           0 |              0
+ local_current_membership                  | local_current_membership_room_idx                               |          7087 | 1152 kB    | 240 kB     | N      |               0 |           0 |              0
+ local_media_repository                    | local_media_repository_media_id_key                             |         18560 | 2976 kB    | 888 kB     | Y      |               0 |           0 |              0
+ local_media_repository                    | local_media_repository_url_idx                                  |         18560 | 2976 kB    | 32 kB      | N      |               0 |           0 |              0
+ local_media_repository                    | users_have_local_media                                          |         18560 | 2976 kB    | 1048 kB    | N      |               0 |           0 |              0
+ local_media_repository_thumbnails         | local_media_repository_thumbn_media_id_width_height_method_key  |         49550 | 4880 kB    | 3984 kB    | Y      |               0 |           0 |              0
+ local_media_repository_thumbnails         | local_media_repository_thumbnails_media_id                      |         49550 | 4880 kB    | 880 kB     | N      |               0 |           0 |              0
+ local_media_repository_url_cache          | local_media_repository_url_cache_by_url_download_ts             |             5 | 8192 bytes | 16 kB      | N      |               0 |           0 |              0
+ local_media_repository_url_cache          | local_media_repository_url_cache_expires_idx                    |             5 | 8192 bytes | 16 kB      | N      |               0 |           0 |              0
+ local_media_repository_url_cache          | local_media_repository_url_cache_media_idx                      |             5 | 8192 bytes | 16 kB      | N      |               0 |           0 |              0
+ monthly_active_users                      | monthly_active_users_time_stamp                                 |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ monthly_active_users                      | monthly_active_users_users                                      |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ open_id_tokens                            | open_id_tokens_pkey                                             |          1458 | 136 kB     | 88 kB      | Y      |               0 |           0 |              0
+ open_id_tokens                            | open_id_tokens_ts_valid_until_ms                                |          1458 | 136 kB     | 48 kB      | N      |               0 |           0 |              0
+ partial_state_events                      | partial_state_events_event_id_key                               |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ partial_state_events                      | partial_state_events_room_id_idx                                |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ partial_state_rooms                       | partial_state_rooms_pkey                                        |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ partial_state_rooms_servers               | partial_state_rooms_servers_room_id_server_name_key             |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ port_from_sqlite3                         | port_from_sqlite3_table_name_key                                |           132 | 16 kB      | 16 kB      | Y      |               0 |           0 |              0
+ presence                                  | presence_user_id_key                                            |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ presence_stream                           | presence_stream_id                                              |         71769 | 17 MB      | 72 MB      | N      |               0 |           0 |              0
+ presence_stream                           | presence_stream_state_not_offline_idx                           |         71769 | 17 MB      | 720 kB     | N      |               0 |           0 |              0
+ presence_stream                           | presence_stream_user_id                                         |         71769 | 17 MB      | 6472 kB    | N      |               0 |           0 |              0
+ profiles                                  | profiles_user_id_key                                            |           499 | 40 kB      | 32 kB      | Y      |               0 |           0 |              0
+ push_rules                                | push_rules_pkey                                                 |           643 | 152 kB     | 32 kB      | Y      |               0 |           0 |              0
+ push_rules                                | push_rules_user_name                                            |           643 | 152 kB     | 16 kB      | N      |               0 |           0 |              0
+ push_rules                                | push_rules_user_name_rule_id_key                                |           643 | 152 kB     | 88 kB      | Y      |               0 |           0 |              0
+ push_rules_enable                         | push_rules_enable_pkey                                          |           612 | 72 kB      | 32 kB      | Y      |               0 |           0 |              0
+ push_rules_enable                         | push_rules_enable_user_name                                     |           612 | 72 kB      | 16 kB      | N      |               0 |           0 |              0
+ push_rules_enable                         | push_rules_enable_user_name_rule_id_key                         |           612 | 72 kB      | 80 kB      | Y      |               0 |           0 |              0
+ push_rules_stream                         | push_rules_stream_id                                            |          1255 | 264 kB     | 48 kB      | N      |               0 |           0 |              0
+ push_rules_stream                         | push_rules_stream_user_stream_id                                |          1255 | 264 kB     | 104 kB     | N      |               0 |           0 |              0
+ pusher_throttle                           | pusher_throttle_pkey                                            |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ pushers                                   | pushers2_app_id_pushkey_user_name_key                           |            67 | 1816 kB    | 56 kB      | Y      |               0 |           0 |              0
+ pushers                                   | pushers2_pkey                                                   |            67 | 1816 kB    | 40 kB      | Y      |               0 |           0 |              0
+ ratelimit_override                        | ratelimit_override_idx                                          |             1 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ receipts_graph                            | receipts_graph_unique_index                                     |        316460 | 68 MB      | 36 MB      | Y      |               0 |           0 |              0
+ receipts_graph                            | receipts_graph_uniqueness                                       |        316460 | 68 MB      | 34 MB      | Y      |               0 |           0 |              0
+ receipts_graph                            | receipts_graph_uniqueness_thread                                |        316460 | 68 MB      | 38 MB      | Y      |               0 |           0 |              0
+ receipts_linearized                       | receipts_linearized_id                                          |        316464 | 67 MB      | 35 MB      | N      |               0 |           0 |              0
+ receipts_linearized                       | receipts_linearized_room_stream                                 |        316464 | 67 MB      | 114 MB     | N      |               0 |           0 |              0
+ receipts_linearized                       | receipts_linearized_unique_index                                |        316464 | 67 MB      | 36 MB      | Y      |               0 |           0 |              0
+ receipts_linearized                       | receipts_linearized_uniqueness                                  |        316464 | 67 MB      | 36 MB      | Y      |               0 |           0 |              0
+ receipts_linearized                       | receipts_linearized_uniqueness_thread                           |        316464 | 67 MB      | 39 MB      | Y      |               0 |           0 |              0
+ receipts_linearized                       | receipts_linearized_user                                        |        316464 | 67 MB      | 15 MB      | N      |               0 |           0 |              0
+ received_transactions                     | received_transactions_transaction_id_origin_key                 |  8.800927e+06 | 893 MB     | 982 MB     | Y      |               0 |           0 |              0
+ received_transactions                     | received_transactions_ts                                        |  8.800927e+06 | 893 MB     | 284 MB     | N      |               0 |           0 |              0
+ redactions                                | redactions_event_id_key                                         |         98611 | 18 MB      | 13 MB      | Y      |               0 |           0 |              0
+ redactions                                | redactions_have_censored_ts                                     |         98611 | 18 MB      | 440 kB     | N      |               0 |           0 |              0
+ redactions                                | redactions_redacts                                              |         98611 | 18 MB      | 10 MB      | N      |               0 |           0 |              0
+ refresh_tokens                            | refresh_tokens_next_token_id                                    |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ refresh_tokens                            | refresh_tokens_pkey                                             |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ refresh_tokens                            | refresh_tokens_token_key                                        |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ registration_tokens                       | registration_tokens_token_key                                   |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ rejections                                | rejections_event_id_key                                         |           775 | 192 kB     | 136 kB     | Y      |               0 |           0 |              0
+ remote_media_cache                        | remote_media_cache_media_origin_media_id_key                    |           481 | 2176 kB    | 1008 kB    | Y      |               0 |           0 |              0
+ remote_media_cache_thumbnails             | remote_media_repository_thumbn_media_origin_id_width_height_met |          1954 | 5352 kB    | 5376 kB    | Y      |               0 |           0 |              0
+ room_account_data                         | room_account_data_stream_id                                     |          4983 | 1000 kB    | 856 kB     | N      |               0 |           0 |              0
+ room_account_data                         | room_account_data_uniqueness                                    |          4983 | 1000 kB    | 560 kB     | Y      |               0 |           0 |              0
+ room_alias_servers                        | room_alias_servers_alias                                        |           274 | 24 kB      | 16 kB      | N      |               0 |           0 |              0
+ room_aliases                              | room_aliases_id                                                 |           111 | 16 kB      | 16 kB      | N      |               0 |           0 |              0
+ room_aliases                              | room_aliases_room_alias_key                                     |           111 | 16 kB      | 16 kB      | Y      |               0 |           0 |              0
+ room_depth                                | room_depth_room_id_key                                          |          3225 | 408 kB     | 376 kB     | Y      |               0 |           0 |              0
+ room_memberships                          | room_memberships_event_id_key                                   |  3.063101e+06 | 800 MB     | 271 MB     | Y      |               0 |           0 |              0
+ room_memberships                          | room_memberships_room_id                                        |  3.063101e+06 | 800 MB     | 32 MB      | N      |               0 |           0 |              0
+ room_memberships                          | room_memberships_user_id                                        |  3.063101e+06 | 800 MB     | 68 MB      | N      |               0 |           0 |              0
+ room_memberships                          | room_memberships_user_room_forgotten                            |  3.063101e+06 | 800 MB     | 56 kB      | N      |               0 |           0 |              0
+ room_retention                            | room_retention_max_lifetime_idx                                 |             2 | 8192 bytes | 16 kB      | N      |               0 |           0 |              0
+ room_retention                            | room_retention_pkey                                             |             2 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ room_stats_current                        | room_stats_current_pkey                                         |          3331 | 480 kB     | 200 kB     | Y      |               0 |           0 |              0
+ room_stats_earliest_token                 | room_stats_earliest_token_idx                                   |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ room_stats_state                          | room_stats_state_room                                           |          3331 | 520 kB     | 200 kB     | Y      |               0 |           0 |              0
+ room_tags                                 | room_tag_uniqueness                                             |           395 | 48 kB      | 64 kB      | Y      |               0 |           0 |              0
+ room_tags_revisions                       | room_tag_revisions_uniqueness                                   |           503 | 56 kB      | 64 kB      | Y      |               0 |           0 |              0
+ rooms                                     | public_room_index                                               |          3314 | 304 kB     | 40 kB      | N      |               0 |           0 |              0
+ rooms                                     | rooms_pkey                                                      |          3314 | 304 kB     | 200 kB     | Y      |               0 |           0 |              0
+ schema_compat_version                     | schema_compat_version_lock_key                                  |             1 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ schema_version                            | schema_version_lock_key                                         |             1 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ server_keys_json                          | server_keys_json_uniqueness                                     |         27340 | 18 MB      | 1784 kB    | Y      |               0 |           0 |              0
+ server_signature_keys                     | server_signature_keys_server_name_key_id_key                    |         23999 | 4056 kB    | 1232 kB    | Y      |               0 |           0 |              0
+ sessions                                  | sessions_session_type_session_id_key                            |             0 | 24 kB      | 16 kB      | Y      |               0 |           0 |              0
+ state_compressor_progress                 | state_compressor_progress_pkey                                  |           625 | 48 kB      | 56 kB      | Y      |               0 |           0 |              0
+ state_compressor_state                    | state_compressor_state_index                                    |          1875 | 152 kB     | 72 kB      | N      |               0 |           0 |              0
+ state_compressor_state                    | state_compressor_state_room_id_level_num_key                    |          1875 | 152 kB     | 128 kB     | Y      |               0 |           0 |              0
+ state_compressor_total_progress           | state_compressor_total_progress_lock_key                        |             1 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ state_events                              | state_events_event_id_key                                       |  3.131485e+06 | 629 MB     | 277 MB     | Y      |               0 |           0 |              0
+ state_group_edges                         | state_group_edges_prev_idx                                      |   1.60394e+06 | 73 MB      | 37 MB      | N      |               0 |           0 |              0
+ state_group_edges                         | state_group_edges_unique_idx                                    |   1.60394e+06 | 73 MB      | 51 MB      | Y      |               0 |           0 |              0
+ state_groups                              | state_groups_pkey                                               |        506779 | 78 MB      | 16 MB      | Y      |               0 |           0 |              0
+ state_groups                              | state_groups_room_id_idx                                        |        506779 | 78 MB      | 6432 kB    | N      |               0 |           0 |              0
+ state_groups_state                        | state_groups_state_type_idx                                     | 1.1049206e+09 | 168 GB     | 92 GB      | N      |               0 |           0 |              0
+ stats_incremental_position                | stats_incremental_position_lock_key                             |             1 | 40 kB      | 16 kB      | Y      |               0 |           0 |              0
+ stream_ordering_to_exterm                 | stream_ordering_to_exterm_idx                                   |        331588 | 66 MB      | 13 MB      | N      |               0 |           0 |              0
+ stream_ordering_to_exterm                 | stream_ordering_to_exterm_rm_idx                                |        331588 | 66 MB      | 52 MB      | N      |               0 |           0 |              0
+ stream_positions                          | stream_positions_idx                                            |             6 | 2024 kB    | 16 kB      | Y      |               0 |           0 |              0
+ threepid_guest_access_tokens              | threepid_guest_access_tokens_index                              |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ threepid_validation_session               | threepid_validation_session_pkey                                |            86 | 16 kB      | 16 kB      | Y      |               0 |           0 |              0
+ threepid_validation_token                 | threepid_validation_token_pkey                                  |             0 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ threepid_validation_token                 | threepid_validation_token_session_id                            |             0 | 8192 bytes | 16 kB      | N      |               0 |           0 |              0
+ ui_auth_sessions                          | ui_auth_sessions_session_id_key                                 |             6 | 16 kB      | 16 kB      | Y      |               0 |           0 |              0
+ ui_auth_sessions_credentials              | ui_auth_sessions_credentials_session_id_stage_type_key          |             0 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ ui_auth_sessions_ips                      | ui_auth_sessions_ips_session_id_ip_user_agent_key               |             5 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ user_daily_visits                         | user_daily_visits_ts_idx                                        |         49512 | 8904 kB    | 384 kB     | N      |               0 |           0 |              0
+ user_daily_visits                         | user_daily_visits_uts_idx                                       |         49512 | 8904 kB    | 2464 kB    | N      |               0 |           0 |              0
+ user_directory                            | user_directory_room_idx                                         |           112 | 16 kB      | 16 kB      | N      |               0 |           0 |              0
+ user_directory                            | user_directory_user_idx                                         |           112 | 16 kB      | 16 kB      | Y      |               0 |           0 |              0
+ user_directory_search                     | user_directory_search_fts_idx                                   |           112 | 16 kB      | 24 kB      | N      |               0 |           0 |              0
+ user_directory_search                     | user_directory_search_user_idx                                  |           112 | 16 kB      | 16 kB      | Y      |               0 |           0 |              0
+ user_directory_stream_pos                 | user_directory_stream_pos_lock_key                              |             1 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ user_external_ids                         | user_external_ids_auth_provider_external_id_key                 |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ user_external_ids                         | user_external_ids_user_id_idx                                   |             0 | 0 bytes    | 8192 bytes | N      |               0 |           0 |              0
+ user_filters                              | user_filters_unique                                             |           528 | 72 kB      | 40 kB      | Y      |               0 |           0 |              0
+ user_ips                                  | user_ips_device_id                                              |          3891 | 1832 kB    | 1080 kB    | N      |               0 |           0 |              0
+ user_ips                                  | user_ips_last_seen                                              |          3891 | 1832 kB    | 848 kB     | N      |               0 |           0 |              0
+ user_ips                                  | user_ips_last_seen_only                                         |          3891 | 1832 kB    | 4680 kB    | N      |               0 |           0 |              0
+ user_ips                                  | user_ips_user_token_ip_unique_index                             |          3891 | 1832 kB    | 1512 kB    | Y      |               0 |           0 |              0
+ user_signature_stream                     | user_signature_stream_idx                                       |           366 | 40 kB      | 16 kB      | Y      |               0 |           0 |              0
+ user_stats_current                        | user_stats_current_pkey                                         |           509 | 40 kB      | 40 kB      | Y      |               0 |           0 |              0
+ user_threepid_id_server                   | user_threepid_id_server_idx                                     |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ user_threepids                            | medium_address                                                  |            20 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ user_threepids                            | user_threepids_medium_address                                   |            20 | 8192 bytes | 16 kB      | N      |               0 |           0 |              0
+ user_threepids                            | user_threepids_user_id                                          |            20 | 8192 bytes | 16 kB      | N      |               0 |           0 |              0
+ users                                     | users_creation_ts                                               |           499 | 72 kB      | 32 kB      | N      |               0 |           0 |              0
+ users                                     | users_name_key                                                  |           499 | 72 kB      | 40 kB      | Y      |               0 |           0 |              0
+ users_in_public_rooms                     | users_in_public_rooms_r_idx                                     |           217 | 24 kB      | 16 kB      | N      |               0 |           0 |              0
+ users_in_public_rooms                     | users_in_public_rooms_u_idx                                     |           217 | 24 kB      | 40 kB      | Y      |               0 |           0 |              0
+ users_pending_deactivation                |                                                                 |             0 | 0 bytes    |            | N      |                 |             |               
+ users_to_send_full_presence_to            | users_to_send_full_presence_to_pkey                             |             0 | 0 bytes    | 8192 bytes | Y      |               0 |           0 |              0
+ users_who_share_private_rooms             | users_who_share_private_rooms_o_idx                             |            23 | 8192 bytes | 16 kB      | N      |               0 |           0 |              0
+ users_who_share_private_rooms             | users_who_share_private_rooms_r_idx                             |            23 | 8192 bytes | 16 kB      | N      |               0 |           0 |              0
+ users_who_share_private_rooms             | users_who_share_private_rooms_u_idx                             |            23 | 8192 bytes | 16 kB      | Y      |               0 |           0 |              0
+ worker_locks                              | worker_locks_key                                                |             0 | 96 kB      | 64 kB      | Y      |               0 |           0 |              0`;
+
+
+  const tableIndexes = tableSizeOutput.split("\n").map(rowString => {
+    const row = rowString.split("|").map(raw => raw.trim());
+    const tableSizeElements = row[3].split(" ");
+    const tableSizeSuffixes = {
+      "bytes": 1,
+      "kB": 1000,
+      "MB": 1000*1000,
+      "GB": 1000*1000*1000
+    }
+    return {
+      name: row[0], 
+      numRows: Number(row[2]),
+      bytes: Number(tableSizeElements[0])*tableSizeSuffixes[tableSizeElements[1]],
+    }
+  });
+
+  // NOTE that there is one entry for each table INDEX, not each table. so remove the dupes as we want per-table data only.
+  const seenAlready = {};
+  const tables = tableIndexes.filter(table => {
+    const toReturn = !seenAlready[table.name];
+    seenAlready[table.name] = true;
+
+    return toReturn;
+  })
+
+  tables.sort((a, b) => {
+     return b.bytes - a.bytes;
+  });
+
+  const top10 = tables.slice(0, 9);
+  const others = tables.slice(9, tables.length)
+  top10.push({
+    name: "others",
+    numRows: others.reduce((accumulator, table) => accumulator + table.numRows, 0),
+    bytes: others.reduce((accumulator, table) => accumulator + table.bytes, 0)
+  })
+
+  const totalBytes = top10.reduce((accumulator, table) => accumulator + table.bytes, 0);
+
+  console.log("tables", tables);
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: top10.map(table => table.name),
+      datasets: [{
+        label: 'filesize %',
+        data: top10.map(table => Math.round((table.bytes/totalBytes)*100)),
+        borderWidth: 2
+      }]
+    },
+    options: {
+    }
+  });
+</script>
+
+ 
+
+ 
