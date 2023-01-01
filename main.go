@@ -39,6 +39,7 @@ func main() {
 		rowCounter += 1
 		if updateCounter > 10000 {
 			if time.Now().After(lastUpdateTime.Add(time.Second)) {
+				lastUpdateTime = time.Now()
 				percent := int((float64(rowCounter) / float64(stream.EstimatedCount)) * float64(100))
 				log.Printf("%d/%d (%d%s) ... \n", rowCounter, stream.EstimatedCount, percent, "%")
 			}
