@@ -1,0 +1,163 @@
+<div style="width:700px; height:700px;">
+  <canvas id="myChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const ctx = document.getElementById('myChart');
+
+
+  /*
+  The following comes from the output of this query: 
+
+  sudo -u postgres psql -d synapse -c "select room_id, count(*) from state_groups_state group by room_id order by count(*) DESC LIMIT 100" | tee /root/large-rooms.txt
+  
+  */
+
+  const roomSizeOutput = `  NlinI               | 450657231
+ xPlvG               | 389135018
+ ndyAb             | 101706083
+ dUtxN               |  37545025
+ NmgkA               |  24989806
+ grOTr             |  21818353
+ WAdLC               |  16239804
+ sfQtQ            |  14144383
+ qSUvX                   |  13388996
+ firtm           |  10151194
+ DGslq               |   9353566
+ kVEqw             |   8354595
+ EYXdr               |   7548122
+ tkMlP              |   5122957
+ TUiY1                  |   3726174
+ NQAlm               |   3464720
+ AdWuy               |   2808438
+ RkUcr               |   2782375
+ AKJwK            |   2734718
+ VwKfl            |   2686841
+ CURkx                  |   2155982
+ VifHH           |   2049300
+ MBCzT               |   1947499
+ zbSMK            |   1925341
+ eqlZc         |   1685376
+ uZFDt             |   1262008
+ WghOY               |   1059302
+ iaFrB              |    967741
+ hWNAS               |    935235
+ fCLCt            |    919655
+ fXSjB               |    791741
+ uHYso             |    743723
+ FEKtB               |    723364
+ zcQwy                |    638365
+ AdphE           |    628321
+ gIhuF              |    608747
+ CCXyQ |    580139
+ cWoZo               |    530707
+ RiQky               |    422555
+ QLScq            |    379495
+ yTEzA                |    367794
+ GTcBD             |    357648
+ epvwS               |    335763
+ FXtQc               |    329364
+ uNxgS                  |    317571
+ NBoXO              |    304640
+ NXmXu              |    296147
+ qdIqF               |    287192
+ ping-v6                         |    284514
+ tPcnH               |    269458
+ ndtvS             |    268087
+ okEaS               |    252121
+ QTpPW              |    252050
+ FwgFX               |    247442
+ QPhnk               |    241355
+ rvmur                |    239737
+ MyYoQ               |    237460
+ GAnDi               |    216717
+ PJwYc               |    207801
+ zVoJs                  |    205413
+ MPQht               |    204009
+ EhDPW               |    197840
+ DNSWA             |    183426
+ WdDwd               |    173816
+ mvrdC               |    162345
+ FeiZg            |    160574
+ MuqXb        |    148981
+ jrFel             |    131865
+ MacrE               |    127906
+ xJAJX               |    125590
+ NqqGH                 |    122167
+ vZTkJ           |    119077
+ OwxSP          |    118159
+ cZrMe               |    112115
+ SooHf               |    112057
+ Nllau  |    109477
+ swJuG           |    101739
+ WBztC               |    101330
+ lGTHN                 |     96961
+ OSwqD               |     94302
+ GBYQw          |     93689
+ FRcyQ               |     92222
+ kfUkX               |     90445
+ xnjXI               |     88150
+ hZdVI               |     87030
+ sHavD               |     82696
+ dxrXz               |     76413
+ yxxkg             |     75466
+ APKBt               |     74789
+ Ztpai               |     72639
+ bcfmb             |     71595
+ BPbab               |     70127
+ GWmHb                  |     66293
+ OzCDR               |     65822
+ YlhCi         |     64625
+ lXVii               |     64562
+ NnwbP           |     62317
+ jNOIF               |     59045
+ Iojqe          |     56746
+ tbMgT                 |     54567`;
+
+
+  const rooms = roomSizeOutput.split("\n").map(rowString => {
+    const row = rowString.split("|").map(raw => raw.trim());
+    
+    return {
+      roomid: row[0].slice(15, row[0].length), 
+      numRows: Number(row[1]),
+    }
+  });
+
+  rooms.sort((a, b) => {
+     return b.numRows - a.numRows;
+  });
+
+  // // this was pulled from tablesize-chartjs.html row count for state_groups_state
+  // const totalRowCount = 1104920600;
+  
+  // const otherRoomsRowCount = totalRowCount - rooms.reduce((accumulator, room) => accumulator + room.numRows, 0)
+
+  // rooms.push({
+  //   roomid: "others",
+  //   numRows: otherRoomsRowCount
+  // })
+
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: rooms.map(room => room.roomid),
+      datasets: [{
+        label: 'filesize %',
+
+        //data: rooms.map(room => Math.round((room.numRows/totalRowCount)*100)),
+        data: rooms.map(room => room.numRows),
+        borderWidth: 2
+      }]
+    },
+    options: {
+    }
+  });
+</script>
+
+ 
+
+ 
