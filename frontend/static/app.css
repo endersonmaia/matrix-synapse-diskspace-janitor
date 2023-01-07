@@ -107,6 +107,7 @@ footer a:visited {
 
 header .session-status, 
 header .session-status a {
+  white-space: nowrap;
   font-weight: 600;
   color: #5f5f5f;
 }

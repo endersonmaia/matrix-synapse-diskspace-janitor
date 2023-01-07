@@ -63,7 +63,27 @@ func initFrontend(config *Config) FrontendApp {
 
 		userIsLoggedIn := session.UserID != ""
 		if userIsLoggedIn {
-			app.buildPageFromTemplate(responseWriter, request, session, "panel.html", nil)
+
+			diskUsage, err := os.ReadFile("data/diskUsage.json")
+			if err != nil {
+				(*session.Flash)["error"] = "an error occurred reading diskUsage json"
+			}
+			dbTableSizes, err := os.ReadFile("data/dbTableSizes.json")
+			if err != nil {
+				(*session.Flash)["error"] = "an error occurred reading dbTableSizes json"
+			}
+			rowCountByRoom, err := os.ReadFile("data/stateGroupsStateRowCountByRoom.json")
+			if err != nil {
+				(*session.Flash)["error"] = "an error occurred reading rowCountByRoom json"
+			}
+
+			panelTemplateData := struct {
+				DiskUsage      string
+				DBTableSizes   string
+				RowCountByRoom string
+			}{string(diskUsage), string(dbTableSizes), string(rowCountByRoom)}
+
+			app.buildPageFromTemplate(responseWriter, request, session, "panel.html", panelTemplateData)
 		} else {
 			if request.Method == "POST" {
 				username := request.PostFormValue("username")
@@ -81,6 +101,9 @@ func initFrontend(config *Config) FrontendApp {
 						if err != nil {
 							log.Println(errors.Wrap(err, "setSession failed"))
 						}
+						http.Redirect(responseWriter, request, "/", http.StatusFound)
+						return
+
 					} else {
 						(*session.Flash)["error"] += "username or password was incorrect"
 					}
