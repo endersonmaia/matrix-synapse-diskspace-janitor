@@ -13,11 +13,13 @@
 <body>
   <header>
     <div class="header-container">
-      <img src="static/images/scruffy.png"/>
-      <h1>
-        matrix-synapse diskspace janitor
-      </h1>
-      <div class="session-status float-right">
+      <div class="horizontal align-center">
+        <img src="static/images/scruffy.png"/>
+        <h1>
+          matrix-synapse diskspace janitor
+        </h1>
+      </div>
+      <div class="session-status">
         {{if .Session.UserID }} 
           {{ .Session.UserID }} | <a href="/logout">logout</a>
         {{end}}

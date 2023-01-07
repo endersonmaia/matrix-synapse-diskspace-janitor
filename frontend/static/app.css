@@ -23,6 +23,7 @@ header .header-container {
   border-bottom: 2px solid #00000031;
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
 header .header-container img {
@@ -107,7 +108,7 @@ footer a:visited {
 header .session-status, 
 header .session-status a {
   font-weight: 600;
-  color: white;
+  color: #5f5f5f;
 }
 header .session-status a {
   text-decoration-thickness: 2px;

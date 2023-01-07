@@ -237,6 +237,8 @@ func (admin *MatrixAdmin) Login(username, password string) (bool, error) {
 		return false, err
 	}
 
+	//log.Printf("%s loginResponse.StatusCode: %d\n", username, loginResponse.StatusCode)
+
 	if loginResponse.StatusCode > 200 {
 		return false, nil
 	}
@@ -264,20 +266,39 @@ func (admin *MatrixAdmin) Login(username, password string) (bool, error) {
 		return false, err
 	}
 
-	roomMembersURLWithoutToken := fmt.Sprintf("%s/_synapse/admin/v1/rooms/%s/members", admin.URL, admin.AdminMatrixRoomId)
+	roomMembersURLWithoutToken := fmt.Sprintf(
+		"%s/_synapse/admin/v1/rooms/%s/members?access_token=",
+		admin.URL, admin.AdminMatrixRoomId,
+	)
 	roomMembersURL := fmt.Sprintf("%s%s", roomMembersURLWithoutToken, admin.Token)
 	roomMembersResponse, err := admin.Client.Get(roomMembersURL)
+	if err != nil {
+		return false, errors.Wrapf(err, "HTTP GET %sxxxxxxx", roomMembersURLWithoutToken)
+	}
 
 	roomMembersResponseBody, err := ioutil.ReadAll(roomMembersResponse.Body)
 	if err != nil {
-		return false, errors.Wrapf(err, "HTTP POST %sxxxxxxx read error", roomMembersURLWithoutToken)
+		return false, errors.Wrapf(err, "HTTP GET %sxxxxxxx read error", roomMembersURLWithoutToken)
 	}
+
+	if roomMembersResponse.StatusCode != 200 {
+		return false, fmt.Errorf(
+			"HTTP GET %sxxxxxxx: HTTP %d: %s",
+			roomMembersURLWithoutToken, roomMembersResponse.StatusCode, string(roomMembersResponseBody),
+		)
+	}
+
 	var roomMembersResponseObject RoomMembersResponseBody
 	err = json.Unmarshal(roomMembersResponseBody, &roomMembersResponseObject)
 	if err != nil {
-		return false, errors.Wrapf(err, "HTTP POST %sxxxxxxxxx response json parse error", roomMembersURLWithoutToken)
+		return false, errors.Wrapf(err, "HTTP GET %sxxxxxxxxx response json parse error", roomMembersURLWithoutToken)
 	}
+	if len(roomMembersResponseObject.Members) == 0 {
+		return false, errors.Wrapf(err, "%s room did not have any members", admin.AdminMatrixRoomId)
+	}
+
 	for _, member := range roomMembersResponseObject.Members {
+		//log.Printf("%s == %s\n", member, fmt.Sprintf("@%s:%s", username, admin.MatrixServerPublicDomain))
 		if member == fmt.Sprintf("@%s:%s", username, admin.MatrixServerPublicDomain) {
 			return true, nil
 		}

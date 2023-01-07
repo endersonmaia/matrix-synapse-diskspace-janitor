@@ -95,6 +95,14 @@ func initFrontend(config *Config) FrontendApp {
 		}
 	})
 
+	app.handleWithSession("/logout", func(responseWriter http.ResponseWriter, request *http.Request, session Session) {
+		if session.UserID != "" && session.SessionId != "" {
+			os.Remove(fmt.Sprintf("data/sessions/%s.json", session.SessionId))
+		}
+		app.deleteCookie(responseWriter, "sessionId")
+		http.Redirect(responseWriter, request, "/", http.StatusFound)
+	})
+
 	// registerHowtoRoutes(&app)
 
 	// registerLoginRoutes(&app, emailService)
@@ -186,6 +194,7 @@ func (app *FrontendApp) setSession(responseWriter http.ResponseWriter, session *
 	sessionIdBuffer := make([]byte, 32)
 	rand.Read(sessionIdBuffer)
 	sessionId := base58.Encode(sessionIdBuffer, base58.BitcoinAlphabet)
+	session.SessionId = sessionId
 
 	err := WriteJsonFile(fmt.Sprintf("data/sessions/%s.json", sessionId), *session)
 	if err != nil {

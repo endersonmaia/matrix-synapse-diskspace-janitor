@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -49,6 +50,9 @@ func main() {
 	}
 
 	validateConfig(&config)
+
+	os.MkdirAll("data", 0644)
+	os.MkdirAll("data/sessions", 0644)
 
 	//db := initDatabase(&config)
 	matrixAdmin = initMatrixAdmin(&config)
