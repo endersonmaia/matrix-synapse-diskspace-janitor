@@ -78,10 +78,10 @@ func initFrontend(config *Config) FrontendApp {
 			}
 
 			panelTemplateData := struct {
-				DiskUsage      string
-				DBTableSizes   string
-				RowCountByRoom string
-			}{string(diskUsage), string(dbTableSizes), string(rowCountByRoom)}
+				DiskUsage      template.JS
+				DBTableSizes   template.JS
+				RowCountByRoom template.JS
+			}{template.JS(diskUsage), template.JS(dbTableSizes), template.JS(rowCountByRoom)}
 
 			app.buildPageFromTemplate(responseWriter, request, session, "panel.html", panelTemplateData)
 		} else {

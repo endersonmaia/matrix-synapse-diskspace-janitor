@@ -54,7 +54,7 @@ func main() {
 	os.MkdirAll("data", 0644)
 	os.MkdirAll("data/sessions", 0644)
 
-	//db := initDatabase(&config)
+	db := initDatabase(&config)
 	matrixAdmin = initMatrixAdmin(&config)
 	frontend := initFrontend(&config)
 
@@ -68,7 +68,7 @@ func main() {
 		} else {
 			sinceLastScheduledTaskDuration := time.Since(time.UnixMilli(janitorState.LastScheduledTaskRunUnixMilli))
 			if !isRunningScheduledTask && sinceLastScheduledTaskDuration > time.Hour*24 {
-				//go runScheduledTask(db, &config)
+				go runScheduledTask(db, &config)
 
 			}
 		}
