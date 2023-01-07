@@ -1,9 +1,75 @@
 
+<div class="horizontal">
+
+  <div class="chart-container">
+    <h3>disk space</h3>
+    <canvas id="chart1"></canvas>
+  </div>
+
+  <div class="chart-container">
+    <h3>database tables</h3>
+    <canvas id="chart2"></canvas>
+  </div>
+
+  <div class="chart-container">
+    <h3>matrix rooms</h3>
+    <canvas id="chart2"></canvas>
+  </div>
+
+</div>
+
+ 
+
 <script src="static/vendor/chartjs/chart.js"></script>
 <script>
 
   const diskUsage = {{ .DiskUsage }};
   const dbTableSizes = {{ .DBTableSizes }};
-  const RowCountByRoom = {{ .RowCountByRoom }};
+  const rowCountByRoom = {{ .RowCountByRoom }};
+
+
+  const tableIndexes = tableSizeOutput.split("\n").map(rowString => {
+    const row = rowString.split("|").map(raw => raw.trim());
+    const tableSizeElements = row[3].split(" ");
+    const tableSizeSuffixes = {
+      "bytes": 1,
+      "kB": 1000,
+      "MB": 1000*1000,
+      "GB": 1000*1000*1000
+    }
+    return {
+      name: row[0], 
+      numRows: Number(row[2]),
+      bytes: Number(tableSizeElements[0])*tableSizeSuffixes[tableSizeElements[1]],
+    }
+  });
+
+
+  dbTableSizes.sort((a, b) => {
+     return b.Bytes - a.Bytes;
+  });
+
+  const top10 = dbTableSizes.slice(0, 9);
+  const others = dbTableSizes.slice(9, dbTableSizes.length)
+  top10.push({
+    Name: "others",
+    Bytes: others.reduce((accumulator, table) => accumulator + table.Bytes, 0)
+  })
+
+  const totalBytes = top10.reduce((accumulator, table) => accumulator + table.Bytes, 0);
+
+  new Chart(document.getElementById('chart2'), {
+    type: 'doughnut',
+    data: {
+      labels: top10.map(table => table.name),
+      datasets: [{
+        label: 'filesize %',
+        data: top10.map(table => Math.round((table.bytes/totalBytes)*100)),
+        borderWidth: 2
+      }]
+    },
+    options: {
+    }
+  });
 
 </script>
