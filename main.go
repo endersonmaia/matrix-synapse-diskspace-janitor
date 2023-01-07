@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"os"
 	"reflect"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 )
 
 type Config struct {
+	MatrixURL                string
+	MatrixAdminToken         string
 	DatabaseType             string
 	DatabaseConnectionString string
 }
@@ -50,9 +53,13 @@ func main() {
 	output, err := json.MarshalIndent(rowCountByRoom, "", "  ")
 
 	if err != nil {
-		log.Fatalf("Can't display output because json.MarshalIndent returned %+v\n", err)
+		log.Printf("Can't save rooms.json because json.MarshalIndent returned %+v\n", err)
 	}
 
-	log.Println(string(output))
+	err = os.WriteFile("./rooms.json", output, 0755)
+
+	if err != nil {
+		log.Printf("Can't save rooms.json because os.WriteFile returned %+v\n", err)
+	}
 
 }

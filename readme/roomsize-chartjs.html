@@ -121,7 +121,8 @@
     const row = rowString.split("|").map(raw => raw.trim());
     
     return {
-      roomid: row[0].slice(15, row[0].length), 
+      //roomid: row[0].slice(15, row[0].length), 
+      roomid: row[0],
       numRows: Number(row[1]),
     }
   });
@@ -130,15 +131,15 @@
      return b.numRows - a.numRows;
   });
 
-  // // this was pulled from tablesize-chartjs.html row count for state_groups_state
-  // const totalRowCount = 1104920600;
+  // this was pulled from tablesize-chartjs.html row count for state_groups_state
+  const totalRowCount = 1162750829;
   
-  // const otherRoomsRowCount = totalRowCount - rooms.reduce((accumulator, room) => accumulator + room.numRows, 0)
+  const otherRoomsRowCount = totalRowCount - rooms.reduce((accumulator, room) => accumulator + room.numRows, 0)
 
-  // rooms.push({
-  //   roomid: "others",
-  //   numRows: otherRoomsRowCount
-  // })
+  rooms.push({
+    roomid: "others",
+    numRows: otherRoomsRowCount
+  })
 
 
   new Chart(ctx, {
@@ -148,8 +149,8 @@
       datasets: [{
         label: 'filesize %',
 
-        //data: rooms.map(room => Math.round((room.numRows/totalRowCount)*100)),
-        data: rooms.map(room => room.numRows),
+        data: rooms.map(room => (room.numRows/totalRowCount)*100),
+        //data: rooms.map(room => room.numRows),
         borderWidth: 2
       }]
     },
