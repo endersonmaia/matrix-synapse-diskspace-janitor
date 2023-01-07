@@ -43,10 +43,10 @@
   new Chart(document.getElementById('chart2'), {
     type: 'doughnut',
     data: {
-      labels: top10.map(table => table.name),
+      labels: top10.map(table => table.Name),
       datasets: [{
         label: 'filesize %',
-        data: top10.map(table => Math.round((table.bytes/totalBytes)*100)),
+        data: top10.map(table => Math.round((table.Bytes/totalBytes)*100)),
         borderWidth: 2
       }]
     },
