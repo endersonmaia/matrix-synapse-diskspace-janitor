@@ -73,12 +73,16 @@ func initFrontend(config *Config) FrontendApp {
 				if err != nil {
 					(*session.Flash)["error"] += "an error was thrown by the login process 😧"
 					log.Println(errors.Wrap(err, "an error was thrown by the login process"))
-				} else if success {
-					session.UserID = username
-					session.ExpiresUnixMilli = time.Now().Add(time.Hour * 24).UnixMilli()
-					err = app.setSession(responseWriter, &session)
-					if err != nil {
-						log.Println(errors.Wrap(err, "setSession failed"))
+				} else {
+					if success {
+						session.UserID = username
+						session.ExpiresUnixMilli = time.Now().Add(time.Hour * 24).UnixMilli()
+						err = app.setSession(responseWriter, &session)
+						if err != nil {
+							log.Println(errors.Wrap(err, "setSession failed"))
+						}
+					} else {
+						(*session.Flash)["error"] += "username or password was incorrect"
 					}
 				}
 			}
