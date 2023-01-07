@@ -54,6 +54,7 @@ func main() {
 	matrixAdmin = initMatrixAdmin(&config)
 	frontend := initFrontend(&config)
 
+	log.Printf("🧹 matrix-synapse-diskspace-janitor is about to try to start listening on :%d\n", config.FrontendPort)
 	go frontend.ListenAndServe()
 
 	for {

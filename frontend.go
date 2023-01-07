@@ -83,7 +83,11 @@ func initFrontend(config *Config) FrontendApp {
 				}
 			}
 
-			app.buildPageFromTemplate(responseWriter, request, session, "login.html", nil)
+			loginPageTemplateData := struct {
+				MatrixServerPublicDomain string
+			}{config.MatrixServerPublicDomain}
+
+			app.buildPageFromTemplate(responseWriter, request, session, "login.html", loginPageTemplateData)
 		}
 	})
 
@@ -184,8 +188,8 @@ func (app *FrontendApp) setSession(responseWriter http.ResponseWriter, session *
 		return err
 	}
 
-	bytes, _ := json.MarshalIndent(session, "", "  ")
-	log.Printf("setSession(): %s  %s\n", sessionId, string(bytes))
+	// bytes, _ := json.MarshalIndent(session, "", "  ")
+	// log.Printf("setSession(): %s  %s\n", sessionId, string(bytes))
 
 	exipreInSeconds := int(time.Until(time.UnixMilli(session.ExpiresUnixMilli)).Seconds())
 	app.setCookie(responseWriter, "sessionId", sessionId, exipreInSeconds, http.SameSiteStrictMode)
@@ -205,8 +209,8 @@ func (app *FrontendApp) handleWithSession(path string, handler func(http.Respons
 	app.Router.HandleFunc(path, func(responseWriter http.ResponseWriter, request *http.Request) {
 		session, err := app.getSession(request, app.Domain)
 
-		bytes, _ := json.MarshalIndent(session, "", "  ")
-		log.Printf("handleWithSession(): %s\n", string(bytes))
+		//bytes, _ := json.MarshalIndent(session, "", "  ")
+		//log.Printf("handleWithSession(): %s\n", string(bytes))
 
 		if err != nil {
 			app.unhandledError(responseWriter, request, err)

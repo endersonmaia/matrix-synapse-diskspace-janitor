@@ -3,6 +3,7 @@
   "FrontendDomain": "matrix-diskspace-janitor.cyberia.club",
   "MatrixServerPublicDomain": "cyberia.club",
   "MatrixURL": "http://localhost:8080",
+  "AdminMatrixRoomId": "",
   "MatrixAdminToken": "changeme",
   "DatabaseType": "postgres",
 
