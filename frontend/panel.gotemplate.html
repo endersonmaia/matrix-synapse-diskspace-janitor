@@ -20,14 +20,14 @@
 
  
 
-<script type="module" src="static/vendor/chartjs/chart.js"></script>
+<script type="module" src="static/vendor/chartjs/chart.umd.js"></script>
 <script>
 
   const diskUsage = {{ .DiskUsage }};
   const dbTableSizes = {{ .DBTableSizes }};
   const rowCountByRoom = {{ .RowCountByRoom }};
 
-  
+
 
   dbTableSizes.sort((a, b) => {
      return b.Bytes - a.Bytes;
