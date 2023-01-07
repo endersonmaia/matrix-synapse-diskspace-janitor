@@ -1,0 +1,51 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>matrix-synapse diskspace janitor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="shortcut icon" href="/static/favicon.png" />
+  <link href="/static/app.css?v={{.CSSHash}}" rel="stylesheet">
+
+  <script src="/static/vendor/chart.js"></script> 
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <img src="static/images/scruffy.png"/>
+      <h1>
+        matrix-synapse diskspace janitor
+      </h1>
+      <div class="session-status float-right">
+        {{if .Session.UserID }} 
+          {{ .Session.UserID }} | <a href="/logout">logout</a>
+        {{end}}
+      </div>
+    </div>
+
+
+  </header>
+  <main>
+    <section class="highlight">
+      {{if index .Session.Flash "error"}}
+        <pre class="flash error">{{index .Session.Flash "error"}}</pre>
+      {{end}}
+      {{if index .Session.Flash "info"}}
+        <pre class="flash info">{{index .Session.Flash "info"}}</pre>
+      {{end}}
+    </section>
+    <section class="page">
+      {{.Page}}
+    </section>
+  </main>
+  <footer>
+    <div class="horizontal justify-center">
+      <div class="cloud">
+      a tool by <a href="https://sequentialread.com/">SequentialRead</a> &nbsp; | &nbsp;
+      <a href="https://git.cyberia.club/cyberia/matrix-synapse-diskspace-janitor">Source Code</a> &nbsp; 
+      </div>
+    </div>
+    </footer>
+</body>
+</html>

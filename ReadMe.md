@@ -1,4 +1,9 @@
-## matrix-synapse-state-groups-state-janitor
+## matrix-synapse-diskspace-janitor
+
+![scruffy the janitor from futurama](frontend/static/images/scruffy.png)
+
+_toilets and boilers, boilers and toilets_
+
 
 
 Matrix-synapse (the matrix homeserver implementation) requires a postgres database server to operate. 

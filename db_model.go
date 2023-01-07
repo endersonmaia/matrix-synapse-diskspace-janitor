@@ -206,7 +206,7 @@ func (model *DBModel) DeleteStateGroupsState(stateGroupIds []int64, startAt int)
 }
 
 // https://dataedo.com/kb/query/postgresql/list-of-tables-by-their-size
-func (model *DBModel) GetDBTableSizes(roomId string) (tables []DBTableSize, err error) {
+func (model *DBModel) GetDBTableSizes() (tables []DBTableSize, err error) {
 
 	rows, err := model.DB.Query(
 		`select schemaname as table_schema, relname as table_name, pg_relation_size(relid) as data_size 

@@ -13,9 +13,11 @@ import (
 )
 
 type MatrixAdmin struct {
-	Client http.Client
-	URL    string
-	Token  string
+	Client                   http.Client
+	AdminMatrixRoomId        string
+	MatrixServerPublicDomain string
+	URL                      string
+	Token                    string
 }
 
 type DeleteRoomRequest struct {
@@ -45,14 +47,36 @@ type ShutdownRoom struct {
 	NewRoomId         string   `json:"new_room_id"`
 }
 
+type LoginRequestBody struct {
+	Identifier        LoginIdentifier `json:"identifier"`
+	DeviceDisplayName string          `json:"initial_device_display_name"`
+	Password          string          `json:"password"`
+	Type              string          `json:"type"`
+}
+
+type LoginIdentifier struct {
+	Type string `json:"type"`
+	User string `json:"user"`
+}
+
+type LoginResponseBody struct {
+	AccessToken string `json:"access_token"`
+}
+
+type RoomMembersResponseBody struct {
+	Members []string `json:"members"`
+}
+
 func initMatrixAdmin(config *Config) *MatrixAdmin {
 
 	return &MatrixAdmin{
 		Client: http.Client{
 			Timeout: 10 * time.Second,
 		},
-		URL:   config.MatrixURL,
-		Token: config.MatrixAdminToken,
+		AdminMatrixRoomId:        config.AdminMatrixRoomId,
+		MatrixServerPublicDomain: config.MatrixServerPublicDomain,
+		URL:                      config.MatrixURL,
+		Token:                    config.MatrixAdminToken,
 	}
 }
 
@@ -186,4 +210,78 @@ func (admin *MatrixAdmin) GetDeleteRoomStatus(roomId string) (string, []string, 
 	}
 
 	return mostCompleteStatus, usersSlice, nil
+}
+
+// curl 'https://matrix.cyberia.club/_matrix/client/r0/login' -X POST  -H 'Accept: application/json' -H 'content-type: application/json'
+//  --data-raw '{"type":"m.login.password","password":"xxxxxxxxx","identifier":{"type":"m.id.user","user":"forestjohnson"},"initial_device_display_name":"chat.cyberia.club (Firefox, Ubuntu)"}'
+
+func (admin *MatrixAdmin) Login(username, password string) (bool, error) {
+
+	loginURL := fmt.Sprintf("%s/_matrix/client/v3/login", admin.URL)
+
+	loginRequestBodyObject := LoginRequestBody{
+		Identifier: LoginIdentifier{
+			Type: "m.id.user",
+			User: username,
+		},
+		DeviceDisplayName: "matrix-synapse-diskspace-janitor",
+		Password:          password,
+		Type:              "m.login.password",
+	}
+	loginRequestBody, err := json.Marshal(loginRequestBodyObject)
+	if err != nil {
+		return false, errors.Wrap(err, "can't serialize LoginRequestBody to json")
+	}
+	loginResponse, err := admin.Client.Post(loginURL, "application/json", bytes.NewBuffer(loginRequestBody))
+	if err != nil {
+		return false, err
+	}
+
+	if loginResponse.StatusCode > 200 {
+		return false, nil
+	}
+
+	responseBody, err := ioutil.ReadAll(loginResponse.Body)
+	if err != nil {
+		return false, errors.Wrapf(err, "HTTP POST %s read error", loginURL)
+	}
+	var responseObject LoginResponseBody
+	err = json.Unmarshal(responseBody, &responseObject)
+	if err != nil {
+		return false, errors.Wrapf(err, "HTTP POST %s response json parse error", loginURL)
+	}
+
+	logoutURL := fmt.Sprintf("%s/_matrix/client/v3/logout", admin.URL)
+	logoutRequest, err := http.NewRequest("POST", logoutURL, nil)
+	if err != nil {
+		return false, errors.Wrap(err, "matrixAdmin.Login(...) cannot create logoutRequest")
+	}
+
+	logoutRequest.Header.Add("Authorization", fmt.Sprintf("Bearer %s", responseObject.AccessToken))
+
+	_, err = admin.Client.Do(logoutRequest)
+	if err != nil {
+		return false, err
+	}
+
+	roomMembersURLWithoutToken := fmt.Sprintf("%s/_synapse/admin/v1/rooms/%s/members", admin.URL, admin.AdminMatrixRoomId)
+	roomMembersURL := fmt.Sprintf("%s%s", roomMembersURLWithoutToken, admin.Token)
+	roomMembersResponse, err := admin.Client.Get(roomMembersURL)
+
+	roomMembersResponseBody, err := ioutil.ReadAll(roomMembersResponse.Body)
+	if err != nil {
+		return false, errors.Wrapf(err, "HTTP POST %sxxxxxxx read error", roomMembersURLWithoutToken)
+	}
+	var roomMembersResponseObject RoomMembersResponseBody
+	err = json.Unmarshal(roomMembersResponseBody, &roomMembersResponseObject)
+	if err != nil {
+		return false, errors.Wrapf(err, "HTTP POST %sxxxxxxxxx response json parse error", roomMembersURLWithoutToken)
+	}
+	for _, member := range roomMembersResponseObject.Members {
+		if member == fmt.Sprintf("@%s:%s", username, admin.MatrixServerPublicDomain) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
