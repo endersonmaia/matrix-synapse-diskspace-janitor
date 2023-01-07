@@ -120,6 +120,23 @@ header .session-status {
 }
 
 
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+}
+
+
+.chart-container h1, 
+.chart-container h2, 
+.chart-container h3, 
+.chart-container h4 {
+  text-align: center;
+}
+
+
+
+
 code {
   padding: 2px 4px;
   font-size: 90%;
@@ -186,43 +203,6 @@ pre.flash.info {
 
 
 
-.admonition {
-  border-left: 8px dashed gray;
-  padding: 5px 20px;
-  /* display: flex;
-  flex-direction: row;
-  align-items: flex-start; */
-  min-height: 100px;
-}
-
-.admonition.warning {
-  border-left-color: #ffbb00;
-  background: #e7d8ae;
-}
-.admonition.info {
-  border-left-color: #289eff;
-  background: #c7dffa;
-}
-.admonition.info code {
-  background-color: #753d3d08;
-}
-.admonition.mascot {
-  border-left-color: #00ffaa;
-  background: #e8ffc3;
-}
-
-.emoji-icon {
-  margin-right: 20px;
-  margin-top: 15px ;
-  float: left;
-  font-family: sans-serif;
-  font-size: 60px;
-  text-shadow: 2px 5px 20px #25202e40, 2px 5px 10px #25202e40, 2px 5px 3px #25202e40;
-}
-.emoji-icon img {
-  width: 70px;
-}
-
 .page {
   padding: 2vw 4vw;
   border-top: 0.4rem dashed #695b62;
@@ -280,10 +260,6 @@ pre.flash.info {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-}
-
-.money-unit {
-  margin-right: 0.3em;
 }
 
 input,button,textarea,
