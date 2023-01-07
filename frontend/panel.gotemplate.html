@@ -20,30 +20,14 @@
 
  
 
-<script src="static/vendor/chartjs/chart.js"></script>
+<script type="module" src="static/vendor/chartjs/chart.js"></script>
 <script>
 
   const diskUsage = {{ .DiskUsage }};
   const dbTableSizes = {{ .DBTableSizes }};
   const rowCountByRoom = {{ .RowCountByRoom }};
 
-
-  const tableIndexes = tableSizeOutput.split("\n").map(rowString => {
-    const row = rowString.split("|").map(raw => raw.trim());
-    const tableSizeElements = row[3].split(" ");
-    const tableSizeSuffixes = {
-      "bytes": 1,
-      "kB": 1000,
-      "MB": 1000*1000,
-      "GB": 1000*1000*1000
-    }
-    return {
-      name: row[0], 
-      numRows: Number(row[2]),
-      bytes: Number(tableSizeElements[0])*tableSizeSuffixes[tableSizeElements[1]],
-    }
-  });
-
+  
 
   dbTableSizes.sort((a, b) => {
      return b.Bytes - a.Bytes;
