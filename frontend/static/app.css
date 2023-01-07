@@ -126,6 +126,12 @@ header .session-status {
   align-content: center;
 }
 
+.chart-container canvas {
+  width: 30vw;
+  min-width: 300px;
+  height: calc(30vw + 200px);
+  min-height: 500px;
+}
 
 .chart-container h1, 
 .chart-container h2, 
