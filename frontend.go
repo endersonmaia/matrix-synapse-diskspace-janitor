@@ -73,6 +73,15 @@ func initFrontend(config *Config) FrontendApp {
 
 		userIsLoggedIn := session.UserID != ""
 		if userIsLoggedIn {
+			if request.Method == "POST" {
+				for i := 0; i < 20; i++ {
+					roomId := request.PostFormValue(fmt.Sprintf("id_%d", i))
+					delete := request.PostFormValue(fmt.Sprintf("delete_%d", i))
+					ban := request.PostFormValue(fmt.Sprintf("ban_%d", i))
+
+					log.Printf("%s %s %s", roomId, delete, ban)
+				}
+			}
 
 			diskUsage, err := os.ReadFile("data/diskUsage.json")
 			if err != nil {
@@ -103,7 +112,7 @@ func initFrontend(config *Config) FrontendApp {
 				return roomsSlice[i].Rows > roomsSlice[j].Rows
 			})
 
-			biggestRooms := roomsSlice[0:6]
+			biggestRooms := roomsSlice[0:10]
 			bigRoomsRowCount := 0
 			for i, room := range biggestRooms {
 				// TODO cache this ??

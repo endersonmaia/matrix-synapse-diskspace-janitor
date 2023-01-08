@@ -20,7 +20,7 @@
 
 <div class="horizontal space-around">
   <form action="/" method="POST" class="box vertical">
-    <h3>delete rooms</h3>
+    <h3>🔨 delete rooms</h3>
 
     {{ range $i, $room := .BigRoomsSlice }}
       {{ if $room.Id }}
@@ -100,15 +100,22 @@
 
 
   //      matrix room size chart 
+  const top7Rooms = bigRooms.slice(0, 6);
+  const otherRooms = rooms.slice(6, bigRooms.length)
+  top7Rooms.push({
+    Name: "Others",
+    Rows: otherRooms.reduce((accumulator, room) => accumulator + room.Rows, 0)
+  })
+
   const totalRows = bigRooms.reduce((accumulator, room) => accumulator + room.Rows, 0);
 
   new Chart(document.getElementById('chart3'), {
     type: 'doughnut',
     data: {
-      labels: bigRooms.map(room => room.Name || room.Id),
+      labels: top7Rooms.map(room => room.Name || room.Id),
       datasets: [{
         label: '%',
-        data: bigRooms.map(room => Math.round((room.Rows/totalRows)*100)),
+        data: top7Rooms.map(room => Math.round((room.Rows/totalRows)*100)),
         borderWidth: 2
       }]
     },
