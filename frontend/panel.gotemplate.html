@@ -23,16 +23,16 @@
     <h3>delete rooms</h3>
 
     {{ range $i, $room := .BigRoomsSlice }}
-      <label for="delete_{{ $i }}" class="horizontal align-center">
-        <span>DELETE</span>
-     
-        <input type="checkbox" id="delete_{{ $i }}" name="delete_{{ $i }}"></input>
-        <input type="hidden" name="id_{{ $i }}" value="{{ $room.Id }}"></input>
-        <span>{{ $room.IdWithName }}</span>
-      </label>
+      {{ if $room.Id }}
+        <label for="delete_{{ $i }}" class="form-row horizontal align-center">
+          <span>DELETE</span>
+       
+          <input type="checkbox" id="delete_{{ $i }}" name="delete_{{ $i }}"></input>
+          <input type="hidden" name="id_{{ $i }}" value="{{ $room.Id }}"></input>
+          <span>{{ $room.IdWithName }}</span>
+        </label>
+      {{ end }}
     {{ end }}
-    
-    <input type="password" name="password" placeholder="password"></input>
     
     <input type="submit" value="SUMBIT"></input>
   </form>

@@ -140,7 +140,9 @@ header .session-status {
   text-align: center;
 }
 
-
+.form-row {
+  padding: 5px;
+}
 
 
 code {
