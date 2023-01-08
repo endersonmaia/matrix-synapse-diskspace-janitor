@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -37,6 +38,13 @@ type FrontendApp struct {
 	cssHash           string
 	basicURLPathRegex *regexp.Regexp
 	base58Regex       *regexp.Regexp
+	roomNameCache     map[string]string
+}
+
+type MatrixRoom struct {
+	Id   string
+	Name string
+	Rows int
 }
 
 func initFrontend(config *Config) FrontendApp {
@@ -56,6 +64,7 @@ func initFrontend(config *Config) FrontendApp {
 		basicURLPathRegex: regexp.MustCompile("(?i)[a-z0-9/?&_+-]+"),
 		base58Regex:       regexp.MustCompile("(?i)[a-z0-9_-]+"),
 		cssHash:           cssHash,
+		roomNameCache:     map[string]string{},
 	}
 
 	// serve the homepage
@@ -72,16 +81,51 @@ func initFrontend(config *Config) FrontendApp {
 			if err != nil {
 				(*session.Flash)["error"] = "an error occurred reading dbTableSizes json"
 			}
-			rowCountByRoom, err := os.ReadFile("data/stateGroupsStateRowCountByRoom.json")
+
+			rowCountByRoomObject, err := ReadJsonFile[map[string]int]("data/stateGroupsStateRowCountByRoom.json")
 			if err != nil {
-				(*session.Flash)["error"] = "an error occurred reading rowCountByRoom json"
+				(*session.Flash)["error"] = "an error occurred reading rowCountByRoom json object"
 			}
 
+			roomsSlice := []MatrixRoom{}
+			totalRowCount := 0
+			for roomId, rows := range rowCountByRoomObject {
+				totalRowCount += rows
+				if rows > 10000 {
+					roomsSlice = append(roomsSlice, MatrixRoom{
+						Id:   roomId,
+						Rows: rows,
+					})
+				}
+			}
+			sort.Slice(roomsSlice, func(i, j int) bool {
+				return roomsSlice[i].Rows > roomsSlice[j].Rows
+			})
+
+			biggestRooms := roomsSlice[0:6]
+			bigRoomsRowCount := 0
+			for _, room := range biggestRooms {
+				name, err := matrixAdmin.GetRoomName(room.Id)
+				if err != nil {
+					log.Printf("error getting name for '%s':  %s\n", room.Id, err)
+				}
+				room.Name = name
+				bigRoomsRowCount += room.Rows
+			}
+
+			biggestRooms = append(biggestRooms, MatrixRoom{
+				Name: "Others",
+				Rows: totalRowCount - bigRoomsRowCount,
+			})
+
+			bigRoomsBytes, _ := json.Marshal(biggestRooms)
+			log.Println(string(bigRoomsBytes))
+
 			panelTemplateData := struct {
-				DiskUsage      template.JS
-				DBTableSizes   template.JS
-				RowCountByRoom template.JS
-			}{template.JS(diskUsage), template.JS(dbTableSizes), template.JS(rowCountByRoom)}
+				DiskUsage    template.JS
+				DBTableSizes template.JS
+				BigRooms     template.JS
+			}{template.JS(diskUsage), template.JS(dbTableSizes), template.JS(bigRoomsBytes)}
 
 			app.buildPageFromTemplate(responseWriter, request, session, "panel.html", panelTemplateData)
 		} else {

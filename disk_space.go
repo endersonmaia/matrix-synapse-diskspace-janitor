@@ -32,7 +32,7 @@ func GetTotalFilesizeWithinFolder(path string) (int64, error) {
 func getTotalFilesizeWithinFolderRecurse(currentPath string, info os.FileInfo) (int64, error) {
 
 	size := info.Size()
-	if info.Mode().IsRegular() {
+	if info.Mode().IsRegular() && !info.IsDir() {
 		return size, nil
 	}
 
@@ -49,14 +49,14 @@ func getTotalFilesizeWithinFolderRecurse(currentPath string, info os.FileInfo) (
 		}
 		for _, fi := range fis {
 			if fi.Name() != "." && fi.Name() != ".." {
-				continue
+				subfolderSize, err := getTotalFilesizeWithinFolderRecurse(filepath.Join(currentPath, fi.Name()), fi)
+				if err != nil {
+					return -1, err
+				} else {
+					size += subfolderSize
+				}
 			}
-			subfolderSize, err := getTotalFilesizeWithinFolderRecurse(filepath.Join(currentPath, fi.Name()), fi)
-			if err != nil {
-				return -1, err
-			} else {
-				size += subfolderSize
-			}
+
 		}
 	}
 

@@ -67,6 +67,11 @@ type RoomMembersResponseBody struct {
 	Members []string `json:"members"`
 }
 
+type RoomDetails struct {
+	Name           string `json:"name"`
+	CanonicalAlias string `json:"canonical_alias"`
+}
+
 func initMatrixAdmin(config *Config) *MatrixAdmin {
 
 	return &MatrixAdmin{
@@ -210,6 +215,45 @@ func (admin *MatrixAdmin) GetDeleteRoomStatus(roomId string) (string, []string, 
 	}
 
 	return mostCompleteStatus, usersSlice, nil
+}
+
+func (admin *MatrixAdmin) GetRoomName(roomId string) (string, error) {
+
+	urlWithoutToken := fmt.Sprintf(
+		"%s/_synapse/admin/v1/rooms/%s/members?access_token=",
+		admin.URL, admin.AdminMatrixRoomId,
+	)
+	url := fmt.Sprintf("%s%s", urlWithoutToken, admin.Token)
+	response, err := admin.Client.Get(url)
+	if err != nil {
+		return "", errors.Wrapf(err, "HTTP GET %sxxxxxxx", urlWithoutToken)
+	}
+
+	responseBody, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return "", errors.Wrapf(err, "HTTP GET %sxxxxxxx read error", urlWithoutToken)
+	}
+
+	if response.StatusCode != 200 {
+		return "", fmt.Errorf(
+			"HTTP GET %sxxxxxxx: HTTP %d: %s",
+			urlWithoutToken, response.StatusCode, string(responseBody),
+		)
+	}
+
+	var responseObject RoomDetails
+	err = json.Unmarshal(responseBody, &responseObject)
+	if err != nil {
+		return "", errors.Wrapf(err, "HTTP GET %sxxxxxxxxx response json parse error", urlWithoutToken)
+	}
+
+	if responseObject.CanonicalAlias != "" {
+		return responseObject.CanonicalAlias, nil
+	}
+	if responseObject.Name != "" {
+		return responseObject.Name, nil
+	}
+	return roomId, nil
 }
 
 // curl 'https://matrix.cyberia.club/_matrix/client/r0/login' -X POST  -H 'Accept: application/json' -H 'content-type: application/json'

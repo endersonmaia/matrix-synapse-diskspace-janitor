@@ -12,7 +12,7 @@
   </div>
 
   <div class="chart-container">
-    <h3>matrix rooms</h3>
+    <h3>state_groups_state by room</h3>
     <canvas id="chart3" width="350" height="550"></canvas>
   </div>
 
@@ -23,7 +23,7 @@
 
   const diskUsage = {{ .DiskUsage }};
   const dbTableSizes = {{ .DBTableSizes }};
-  const rowCountByRoom = {{ .RowCountByRoom }};
+  const bigRooms = {{ .BigRooms }};
 
   //     disk space chart 
 
@@ -51,22 +51,22 @@
      return b.Bytes - a.Bytes;
   });
 
-  const top8Tables = dbTableSizes.slice(0, 7);
-  const others = dbTableSizes.slice(7, dbTableSizes.length)
-  top8Tables.push({
+  const top7Tables = dbTableSizes.slice(0, 6);
+  const others = dbTableSizes.slice(6, dbTableSizes.length)
+  top7Tables.push({
     Name: "others",
     Bytes: others.reduce((accumulator, table) => accumulator + table.Bytes, 0)
   })
 
-  const totalBytes = top8Tables.reduce((accumulator, table) => accumulator + table.Bytes, 0);
+  const totalBytes = top7Tables.reduce((accumulator, table) => accumulator + table.Bytes, 0);
 
   new Chart(document.getElementById('chart2'), {
     type: 'doughnut',
     data: {
-      labels: top8Tables.map(table => table.Name),
+      labels: top7Tables.map(table => table.Name),
       datasets: [{
         label: 'filesize %',
-        data: top8Tables.map(table => Math.round((table.Bytes/totalBytes)*100)),
+        data: top7Tables.map(table => Math.round((table.Bytes/totalBytes)*100)),
         borderWidth: 2
       }]
     },
@@ -77,28 +77,15 @@
 
 
   //      matrix room size chart 
-  const rooms = Object.entries(rowCountByRoom).map(entry => ({roomid: entry[0], rows: entry[1]}));
-
-  rooms.sort((a, b) => {
-     return b.rows - a.rows;
-  });
-
-  const top8Rooms = rooms.slice(0, 7);
-  const otherRooms = rooms.slice(7, rooms.length)
-  top8Rooms.push({
-    roomid: "others",
-    rows: otherRooms.reduce((accumulator, table) => accumulator + table.rows, 0)
-  })
-
-  const totalRows = top8Rooms.reduce((accumulator, table) => accumulator + table.rows, 0);
+  const totalRows = bigRooms.reduce((accumulator, room) => accumulator + room.Rows, 0);
 
   new Chart(document.getElementById('chart3'), {
     type: 'doughnut',
     data: {
-      labels: top8Rooms.map(table => table.roomid),
+      labels: bigRooms.map(room => room.Name),
       datasets: [{
         label: '%',
-        data: top8Rooms.map(table => Math.round((table.rows/totalRows)*100)),
+        data: bigRooms.map(room => Math.round((room.Rows/totalRows)*100)),
         borderWidth: 2
       }]
     },
