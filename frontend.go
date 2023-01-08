@@ -42,9 +42,10 @@ type FrontendApp struct {
 }
 
 type MatrixRoom struct {
-	Id   string
-	Name string
-	Rows int
+	Id         string
+	Name       string
+	IdWithName string
+	Rows       int
 }
 
 func initFrontend(config *Config) FrontendApp {
@@ -110,9 +111,10 @@ func initFrontend(config *Config) FrontendApp {
 					log.Printf("error getting name for '%s':  %s\n", room.Id, err)
 				}
 				biggestRooms[i] = MatrixRoom{
-					Id:   room.Id,
-					Name: name,
-					Rows: room.Rows,
+					Id:         room.Id,
+					Name:       name,
+					IdWithName: fmt.Sprintf("%s: %s", room.Id, name),
+					Rows:       room.Rows,
 				}
 				bigRoomsRowCount += room.Rows
 			}

@@ -251,10 +251,9 @@ func (admin *MatrixAdmin) GetRoomName(roomId string) (string, error) {
 		return responseObject.CanonicalAlias, nil
 	}
 	if responseObject.Name != "" {
-		roomIdSplit := strings.Split(roomId, ":")
-		return fmt.Sprintf("%s: %s", roomIdSplit[1], responseObject.Name), nil
+		return responseObject.Name, nil
 	}
-	return roomId, nil
+	return "no name found", nil
 }
 
 // curl 'https://matrix.cyberia.club/_matrix/client/r0/login' -X POST  -H 'Accept: application/json' -H 'content-type: application/json'
