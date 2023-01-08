@@ -101,7 +101,7 @@
 
   //      matrix room size chart 
   const top7Rooms = bigRooms.slice(0, 6);
-  const otherRooms = rooms.slice(6, bigRooms.length)
+  const otherRooms = bigRooms.slice(6, bigRooms.length)
   top7Rooms.push({
     Name: "Others",
     Rows: otherRooms.reduce((accumulator, room) => accumulator + room.Rows, 0)
