@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -244,7 +243,6 @@ func (admin *MatrixAdmin) GetRoomName(roomId string) (string, error) {
 
 	var responseObject RoomDetails
 	err = json.Unmarshal(responseBody, &responseObject)
-	log.Println(string(responseBody))
 	if err != nil {
 		return "", errors.Wrapf(err, "HTTP GET %sxxxxxxxxx response json parse error", urlWithoutToken)
 	}
