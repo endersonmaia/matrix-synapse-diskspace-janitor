@@ -18,6 +18,27 @@
 
 </div> 
 
+<div class="horizontal space-around">
+  <form action="/" method="POST" class="box vertical">
+    <h3>delete rooms</h3>
+
+    {{ range $i, $room := .BigRoomsSlice }}
+      <label for="delete_{{ $i }}" class="horizontal">
+        DELETE
+     
+        <input type="checkbox" id="delete_{{ $i }}" name="delete_{{ $i }}"></input>
+        <input type="text" disabled name="id_{{ $i }}" value="{{ $room.Id }}"></input>
+        <input type="text" disabled value="{{ $room.Name }}"></input>
+        <input type="text" disabled name="rows_{{ $i }}" value="{{ $room.Rows }}"></input>
+      </label>
+    {{ end }}
+    
+    <input type="password" name="password" placeholder="password"></input>
+    
+    <input type="submit" value="SUMBIT"></input>
+  </form>
+</div>
+
 <script src="static/vendor/chart.js"></script>
 <script>
 

@@ -251,7 +251,8 @@ func (admin *MatrixAdmin) GetRoomName(roomId string) (string, error) {
 		return responseObject.CanonicalAlias, nil
 	}
 	if responseObject.Name != "" {
-		return responseObject.Name, nil
+		roomIdSplit := strings.Split(roomId, ":")
+		return fmt.Sprintf("%s: %s", roomIdSplit[1], responseObject.Name), nil
 	}
 	return roomId, nil
 }

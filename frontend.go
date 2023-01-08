@@ -104,12 +104,16 @@ func initFrontend(config *Config) FrontendApp {
 
 			biggestRooms := roomsSlice[0:6]
 			bigRoomsRowCount := 0
-			for _, room := range biggestRooms {
+			for i, room := range biggestRooms {
 				name, err := matrixAdmin.GetRoomName(room.Id)
 				if err != nil {
 					log.Printf("error getting name for '%s':  %s\n", room.Id, err)
 				}
-				room.Name = name
+				biggestRooms[i] = MatrixRoom{
+					Id:   room.Id,
+					Name: name,
+					Rows: room.Rows,
+				}
 				bigRoomsRowCount += room.Rows
 			}
 
@@ -122,10 +126,11 @@ func initFrontend(config *Config) FrontendApp {
 			log.Println(string(bigRoomsBytes))
 
 			panelTemplateData := struct {
-				DiskUsage    template.JS
-				DBTableSizes template.JS
-				BigRooms     template.JS
-			}{template.JS(diskUsage), template.JS(dbTableSizes), template.JS(bigRoomsBytes)}
+				DiskUsage     template.JS
+				DBTableSizes  template.JS
+				BigRooms      template.JS
+				BigRoomsSlice []MatrixRoom
+			}{template.JS(diskUsage), template.JS(dbTableSizes), template.JS(bigRoomsBytes), biggestRooms}
 
 			app.buildPageFromTemplate(responseWriter, request, session, "panel.html", panelTemplateData)
 		} else {
