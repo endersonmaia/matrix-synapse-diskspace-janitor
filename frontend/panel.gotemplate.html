@@ -24,13 +24,16 @@
 
     {{ range $i, $room := .BigRoomsSlice }}
       {{ if $room.Id }}
-        <label for="delete_{{ $i }}" class="form-row horizontal align-center">
-          <span>DELETE</span>
-       
-          <input type="checkbox" id="delete_{{ $i }}" name="delete_{{ $i }}"></input>
+        <div class="form-row horizontal align-center">
           <input type="hidden" name="id_{{ $i }}" value="{{ $room.Id }}"></input>
-          <span>{{ $room.IdWithName }}</span>
-        </label>
+
+          <label for="delete_{{ $i }}" >DELETE</span>
+          <input type="checkbox" id="delete_{{ $i }}" name="delete_{{ $i }}"></input>
+          <span> &nbsp; </span>
+          <label for="ban_{{ $i }}" >BAN</span>
+          <input type="checkbox" id="ban_{{ $i }}" name="ban_{{ $i }}"></input>
+          <span> &nbsp;  {{ $room.IdWithName }}</span>
+        </div>
       {{ end }}
     {{ end }}
     
@@ -102,7 +105,7 @@
   new Chart(document.getElementById('chart3'), {
     type: 'doughnut',
     data: {
-      labels: bigRooms.map(room => room.Name),
+      labels: bigRooms.map(room => room.Name || room.Id),
       datasets: [{
         label: '%',
         data: bigRooms.map(room => Math.round((room.Rows/totalRows)*100)),

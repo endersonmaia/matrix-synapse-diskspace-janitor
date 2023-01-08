@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -220,8 +221,8 @@ func (admin *MatrixAdmin) GetDeleteRoomStatus(roomId string) (string, []string, 
 func (admin *MatrixAdmin) GetRoomName(roomId string) (string, error) {
 
 	urlWithoutToken := fmt.Sprintf(
-		"%s/_synapse/admin/v1/rooms/%s/members?access_token=",
-		admin.URL, admin.AdminMatrixRoomId,
+		"%s/_synapse/admin/v1/rooms/%s?access_token=",
+		admin.URL, roomId,
 	)
 	url := fmt.Sprintf("%s%s", urlWithoutToken, admin.Token)
 	response, err := admin.Client.Get(url)
@@ -243,6 +244,7 @@ func (admin *MatrixAdmin) GetRoomName(roomId string) (string, error) {
 
 	var responseObject RoomDetails
 	err = json.Unmarshal(responseBody, &responseObject)
+	log.Println(string(responseBody))
 	if err != nil {
 		return "", errors.Wrapf(err, "HTTP GET %sxxxxxxxxx response json parse error", urlWithoutToken)
 	}

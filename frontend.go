@@ -106,6 +106,7 @@ func initFrontend(config *Config) FrontendApp {
 			biggestRooms := roomsSlice[0:6]
 			bigRoomsRowCount := 0
 			for i, room := range biggestRooms {
+				// TODO cache this ??
 				name, err := matrixAdmin.GetRoomName(room.Id)
 				if err != nil {
 					log.Printf("error getting name for '%s':  %s\n", room.Id, err)
@@ -125,7 +126,7 @@ func initFrontend(config *Config) FrontendApp {
 			})
 
 			bigRoomsBytes, _ := json.Marshal(biggestRooms)
-			log.Println(string(bigRoomsBytes))
+			//log.Println(string(bigRoomsBytes))
 
 			panelTemplateData := struct {
 				DiskUsage     template.JS
