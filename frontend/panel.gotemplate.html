@@ -32,6 +32,7 @@
           <span> &nbsp; </span>
           <label for="ban_{{ $i }}" >BAN</span>
           <input type="checkbox" id="ban_{{ $i }}" name="ban_{{ $i }}"></input>
+          <span> &nbsp; {{ $room.Percent }}% </span>
           <span> &nbsp;  {{ $room.IdWithName }}</span>
         </div>
       {{ end }}

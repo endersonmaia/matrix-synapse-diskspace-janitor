@@ -46,6 +46,7 @@ type MatrixRoom struct {
 	Name       string
 	IdWithName string
 	Rows       int
+	Percent    int
 }
 
 func initFrontend(config *Config) FrontendApp {
@@ -125,6 +126,7 @@ func initFrontend(config *Config) FrontendApp {
 					Name:       name,
 					IdWithName: fmt.Sprintf("%s: %s", room.Id, name),
 					Rows:       room.Rows,
+					Percent:    int((float64(room.Rows) / float64(totalRowCount)) * float64(100)),
 				}
 				bigRoomsRowCount += room.Rows
 			}
