@@ -102,7 +102,7 @@ func (model *DBModel) StateGroupsStateStream() (*StateGroupsStateStream, error) 
 
 func (model *DBModel) GetStateGroupsForRoom(roomId string) (stateGroupIds []int64, err error) {
 
-	rows, err := model.DB.Query("SELECT id from state_groups where room_id = %s", roomId)
+	rows, err := model.DB.Query("SELECT id from state_groups where room_id = $1", roomId)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not select from state_groups by room_id")
 	}
@@ -128,7 +128,7 @@ func (model *DBModel) DeleteStateGroupsForRoom(roomId string) (int64, error) {
 
 	// state_group_edges
 	result, err := model.DB.Exec(
-		"DELETE FROM state_group_edges where state_group in (SELECT id from state_groups where room_id = %s);", roomId,
+		"DELETE FROM state_group_edges where state_group in (SELECT id from state_groups where room_id = $1);", roomId,
 	)
 	if err != nil {
 		return -1, errors.Wrap(err, "could not delete state_group_edges by room_id")
@@ -141,7 +141,7 @@ func (model *DBModel) DeleteStateGroupsForRoom(roomId string) (int64, error) {
 
 	// event_to_state_groups
 	result, err = model.DB.Exec(
-		"DELETE FROM event_to_state_groups where state_group in (SELECT id from state_groups where room_id = %s);", roomId,
+		"DELETE FROM event_to_state_groups where state_group in (SELECT id from state_groups where room_id = $1);", roomId,
 	)
 	if err != nil {
 		return -1, errors.Wrap(err, "could not delete event_to_state_groups by room_id")
@@ -154,7 +154,7 @@ func (model *DBModel) DeleteStateGroupsForRoom(roomId string) (int64, error) {
 
 	// state_groups
 	result, err = model.DB.Exec(
-		"DELETE FROM state_groups where room_id = %s;", roomId,
+		"DELETE FROM state_groups where room_id = $1;", roomId,
 	)
 	if err != nil {
 		return -1, errors.Wrap(err, "could not delete state_groups by room_id")
@@ -180,7 +180,7 @@ func (model *DBModel) DeleteStateGroupsState(stateGroupIds []int64, startAt int)
 		var errorCount int64 = 0
 		for i := startAt; i < len(stateGroupIds); i++ {
 			result, err := model.DB.Exec(
-				"DELETE FROM state_groups_state where state_group = %s;", stateGroupIds[i],
+				"DELETE FROM state_groups_state where state_group = $1;", stateGroupIds[i],
 			)
 			if err != nil {
 				fmt.Println(errors.Wrap(err, "could not delete from state_groups_state by state_group"))
