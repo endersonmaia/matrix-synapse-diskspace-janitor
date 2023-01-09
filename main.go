@@ -79,7 +79,7 @@ func main() {
 		} else {
 			sinceLastScheduledTaskDuration := time.Since(time.UnixMilli(janitorState.LastScheduledTaskRunUnixMilli))
 			if !isRunningScheduledTask && sinceLastScheduledTaskDuration > time.Hour*24 {
-				go runScheduledTask(db, &config)
+				go runScheduledTask(db, &config, true, true)
 
 			}
 		}
@@ -88,10 +88,15 @@ func main() {
 	}
 }
 
-func runScheduledTask(db *DBModel, config *Config) {
+func runScheduledTask(db *DBModel, config *Config, measureMediaSize bool, stateGroupsStateScan bool) {
 
 	isRunningScheduledTask = true
 	log.Println("starting runScheduledTask...")
+
+	originalDiskUsage, err := ReadJsonFile[DiskUsage]("data/diskUsage.json")
+	if err != nil {
+		log.Printf("ERROR!: runScheduledTask can't read data/diskUsage.json: %s\n", err)
+	}
 
 	log.Println("GetDBTableSizes...")
 	tables, err := db.GetDBTableSizes()
@@ -110,10 +115,15 @@ func runScheduledTask(db *DBModel, config *Config) {
 		log.Printf("ERROR!: runScheduledTask can't GetAvaliableDiskSpace: %s\n", err)
 	}
 
-	log.Printf("GetTotalFilesizeWithinFolder(\"%s\")...\n", config.MediaFolder)
-	mediaBytes, err := GetTotalFilesizeWithinFolder(config.MediaFolder)
-	if err != nil {
-		log.Printf("ERROR!: runScheduledTask can't GetTotalFilesizeWithinFolder(\"%s\"): %s\n", config.MediaFolder, err)
+	var mediaBytes int64
+	if measureMediaSize {
+		log.Printf("GetTotalFilesizeWithinFolder(\"%s\")...\n", config.MediaFolder)
+		mediaBytes, err = GetTotalFilesizeWithinFolder(config.MediaFolder)
+		if err != nil {
+			log.Printf("ERROR!: runScheduledTask can't GetTotalFilesizeWithinFolder(\"%s\"): %s\n", config.MediaFolder, err)
+		}
+	} else {
+		mediaBytes = originalDiskUsage.MediaBytes
 	}
 
 	log.Printf("GetTotalFilesizeWithinFolder(\"%s\")...\n", config.PostgresFolder)
@@ -135,34 +145,36 @@ func runScheduledTask(db *DBModel, config *Config) {
 		log.Printf("ERROR!: runScheduledTask can't write data/diskUsage.json: %s\n", err)
 	}
 
-	log.Println("starting db.StateGroupsStateStream()...")
-	stream, err := db.StateGroupsStateStream()
-	if err != nil {
-		log.Fatalf("Can't start because %+v\n", err)
-	}
-
-	lastUpdateTime := time.Now()
-	updateCounter := 0
-	rowCounter := 0
-	rowCountByRoom := map[string]int{}
-
-	for row := range stream.Channel {
-		rowCountByRoom[row.RoomID] = rowCountByRoom[row.RoomID] + 1
-		updateCounter += 1
-		rowCounter += 1
-		if updateCounter > 10000 {
-			if time.Now().After(lastUpdateTime.Add(time.Second * 60)) {
-				lastUpdateTime = time.Now()
-				percent := int((float64(rowCounter) / float64(stream.EstimatedCount)) * float64(100))
-				log.Printf("state_groups_state table scan %d/%d (%d%s) ... \n", rowCounter, stream.EstimatedCount, percent, "%")
-			}
-			updateCounter = 0
+	if stateGroupsStateScan {
+		log.Println("starting db.StateGroupsStateStream()...")
+		stream, err := db.StateGroupsStateStream()
+		if err != nil {
+			log.Fatalf("Can't start because %+v\n", err)
 		}
-	}
 
-	err = WriteJsonFile("data/stateGroupsStateRowCountByRoom.json", rowCountByRoom)
-	if err != nil {
-		log.Printf("ERROR!: runScheduledTask can't write data/stateGroupsStateRowCountByRoom.json: %s\n", err)
+		lastUpdateTime := time.Now()
+		updateCounter := 0
+		rowCounter := 0
+		rowCountByRoom := map[string]int{}
+
+		for row := range stream.Channel {
+			rowCountByRoom[row.RoomID] = rowCountByRoom[row.RoomID] + 1
+			updateCounter += 1
+			rowCounter += 1
+			if updateCounter > 10000 {
+				if time.Now().After(lastUpdateTime.Add(time.Second * 60)) {
+					lastUpdateTime = time.Now()
+					percent := int((float64(rowCounter) / float64(stream.EstimatedCount)) * float64(100))
+					log.Printf("state_groups_state table scan %d/%d (%d%s) ... \n", rowCounter, stream.EstimatedCount, percent, "%")
+				}
+				updateCounter = 0
+			}
+		}
+
+		err = WriteJsonFile("data/stateGroupsStateRowCountByRoom.json", rowCountByRoom)
+		if err != nil {
+			log.Printf("ERROR!: runScheduledTask can't write data/stateGroupsStateRowCountByRoom.json: %s\n", err)
+		}
 	}
 
 	log.Println("updating data/janitorState.json...")

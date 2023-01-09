@@ -97,8 +97,10 @@ func initFrontend(config *Config, db *DBModel) FrontendApp {
 			if request.Method == "POST" {
 
 				refresh := request.PostFormValue("refresh")
+				measureMediaSize := request.PostFormValue("measureMediaSize") == "on"
+				stateGroupsStateScan := request.PostFormValue("stateGroupsStateScan") == "on"
 				if refresh == "true" {
-					go runScheduledTask(db, config)
+					go runScheduledTask(db, config, measureMediaSize, stateGroupsStateScan)
 
 					http.Redirect(responseWriter, request, "/", http.StatusFound)
 					return

@@ -14,6 +14,15 @@
 
 
   <form action="/" method="POST" class="box vertical">
+    <div class="form-row horizontal">
+      <label for="measureMediaSize" >measure size of media folder</span>
+        <input type="checkbox" id="measureMediaSize" name="measureMediaSize"></input>
+    </div>
+
+    <div class="form-row horizontal">
+      <label for="stateGroupsStateScan" >rescan <code>state_groups_state</code></span>
+        <input type="checkbox" id="stateGroupsStateScan" name="stateGroupsStateScan"></input>
+    </div>
     <input type="hidden" name="refresh" value="true"></input>
     <input type="submit" value="Re-run data gathering task now"></input>
   </form>
