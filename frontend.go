@@ -95,6 +95,15 @@ func initFrontend(config *Config, db *DBModel) FrontendApp {
 			}
 
 			if request.Method == "POST" {
+
+				refresh := request.PostFormValue("refresh")
+				if refresh == "true" {
+					go runScheduledTask(db, config)
+
+					http.Redirect(responseWriter, request, "/", http.StatusFound)
+					return
+				}
+
 				toDelete := []MatrixRoom{}
 				for i := 0; i < 20; i++ {
 					roomId := request.PostFormValue(fmt.Sprintf("id_%d", i))
@@ -180,7 +189,8 @@ func initFrontend(config *Config, db *DBModel) FrontendApp {
 				DBTableSizes  template.JS
 				BigRooms      template.JS
 				BigRoomsSlice []MatrixRoom
-			}{template.JS(diskUsage), template.JS(dbTableSizes), template.JS(bigRoomsBytes), biggestRooms}
+				Updating      bool
+			}{template.JS(diskUsage), template.JS(dbTableSizes), template.JS(bigRoomsBytes), biggestRooms, isRunningScheduledTask}
 
 			app.buildPageFromTemplate(responseWriter, request, session, "panel.html", panelTemplateData)
 		} else {

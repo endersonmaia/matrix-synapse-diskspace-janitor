@@ -144,6 +144,11 @@ header .session-status {
   padding: 5px;
 }
 
+.bold-red {
+  font-style: italic;
+  font-weight: bold;
+  color: #a5048a;
+}
 
 code {
   padding: 2px 4px;
