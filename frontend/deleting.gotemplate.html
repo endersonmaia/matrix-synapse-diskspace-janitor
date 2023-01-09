@@ -7,7 +7,7 @@
       <div class="horizontal align-center">
 
         <label for="ban_{{ $i }}" >BAN</span>
-        <input  id="ban_{{ $i }}" type="checkbox" disabled value="{{if $room.Ban }}on{{ end }}"></input>
+        <input  id="ban_{{ $i }}" type="checkbox" disabled {{if $room.Ban }}checked{{ end }}></input>
         <span> STATUS: {{ $room.Status }} &nbsp;  {{ $room.IdWithName }}</span>
       </div>
     {{ end }}

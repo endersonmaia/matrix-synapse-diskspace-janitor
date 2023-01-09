@@ -183,6 +183,10 @@ func doRoomDeletes(db *DBModel) {
 	isDoingDeletes = true
 	defer func() {
 		isDoingDeletes = false
+		err := os.Remove("data/deleteRooms.json")
+		if err != nil {
+			log.Printf("doRoomDeletes(): failed to remove deleteRooms.json: %s\n", err)
+		}
 	}()
 
 	deleteProgress, err := ReadJsonFile[DeleteProgress]("data/deleteRooms.json")
@@ -301,11 +305,6 @@ func doRoomDeletes(db *DBModel) {
 	}
 
 	log.Printf("doRoomDeletes(): %d state_groups related rows deleted. \n", totalStateGroupRows)
-
-	err = os.Remove("data/deleteRooms.json")
-	if err != nil {
-		log.Printf("doRoomDeletes(): failed to remove deleteRooms.json: %s\n", err)
-	}
 
 	log.Println("doRoomDeletes(): completed successfully!!")
 }
