@@ -14,7 +14,7 @@
   {{ end }}
   </div>
 
-  {{ if .StateGroupsStateProgress > 0 }}
+  {{ if gt .StateGroupsStateProgress 0 }}
       <p>
         Progress of deleting rows from <code>state_groups_state</code>: {{ .StateGroupsStateProgress }}%
       </p>
