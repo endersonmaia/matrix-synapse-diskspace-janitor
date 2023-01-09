@@ -10,7 +10,7 @@ import (
 func WriteJsonFile[T any](path string, object T) error {
 	mutex.Lock()
 	defer mutex.Unlock()
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}

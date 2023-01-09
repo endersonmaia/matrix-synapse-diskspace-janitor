@@ -260,7 +260,7 @@ func doRoomDeletes(db *DBModel) {
 		return allStateGroupsToDelete[i] < allStateGroupsToDelete[j]
 	})
 
-	allStateGroupsToDeleteFile, err := os.OpenFile("data/stateGroupsToDelete.txt", os.O_CREATE|os.O_WRONLY, 0644)
+	allStateGroupsToDeleteFile, err := os.OpenFile("data/stateGroupsToDelete.txt", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	for _, stateGroupId := range allStateGroupsToDelete {
 		fmt.Fprintf(allStateGroupsToDeleteFile, "%d\n", stateGroupId)
 	}
