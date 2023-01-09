@@ -64,6 +64,14 @@ func main() {
 	log.Printf("🧹 matrix-synapse-diskspace-janitor is about to try to start listening on :%d\n", config.FrontendPort)
 	go frontend.ListenAndServe()
 
+	// resume a previously stopped delete
+	deleteRooms, err := ReadJsonFile[DeleteProgress]("data/deleteRooms.json")
+	if err != nil {
+		log.Printf("ERROR!: can't read data/deleteRooms.json: %+v\n", err)
+	} else if deleteRooms.Rooms != nil && len(deleteRooms.Rooms) != 0 {
+		go doRoomDeletes(db)
+	}
+
 	for {
 		janitorState, err := ReadJsonFile[JanitorState]("data/janitorState.json")
 		if err != nil {
@@ -183,10 +191,6 @@ func doRoomDeletes(db *DBModel) {
 	isDoingDeletes = true
 	defer func() {
 		isDoingDeletes = false
-		err := os.Remove("data/deleteRooms.json")
-		if err != nil {
-			log.Printf("doRoomDeletes(): failed to remove deleteRooms.json: %s\n", err)
-		}
 	}()
 
 	deleteProgress, err := ReadJsonFile[DeleteProgress]("data/deleteRooms.json")
@@ -252,6 +256,7 @@ func doRoomDeletes(db *DBModel) {
 
 	allStateGroupsToDelete := []int64{}
 	for _, room := range deleteProgress.Rooms {
+		log.Printf("db.GetStateGroupsForRoom(%s)\n", room.Id)
 		stateGroups, err := db.GetStateGroupsForRoom(room.Id)
 		if err != nil {
 			log.Printf("doRoomDeletes(): Can't do room deletes because getting state group ids for %s returned %s\n", room.Id, err)
@@ -305,6 +310,11 @@ func doRoomDeletes(db *DBModel) {
 	}
 
 	log.Printf("doRoomDeletes(): %d state_groups related rows deleted. \n", totalStateGroupRows)
+
+	err = os.Remove("data/deleteRooms.json")
+	if err != nil {
+		log.Printf("doRoomDeletes(): failed to remove deleteRooms.json: %s\n", err)
+	}
 
 	log.Println("doRoomDeletes(): completed successfully!!")
 }

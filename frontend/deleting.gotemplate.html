@@ -1,6 +1,12 @@
 <div class="vertical align-center">
   <h3>deleting...</h3>
 
+  <p>
+    <em>This page will automatically refresh every 10 seconds while the deletion process is happening...</em>
+  </p>
+  <script>
+    setTimeout(function(){ window.location.reload(); }, 1000 * 10);
+  </script>
   <div>
   {{ range $i, $room := .Rooms }}
     {{ if $room.Id }}
