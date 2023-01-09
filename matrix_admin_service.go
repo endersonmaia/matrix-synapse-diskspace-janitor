@@ -234,6 +234,10 @@ func (admin *MatrixAdmin) GetRoomName(roomId string) (string, error) {
 		return "", errors.Wrapf(err, "HTTP GET %sxxxxxxx read error", urlWithoutToken)
 	}
 
+	if response.StatusCode == 404 {
+		return "no name found", nil
+	}
+
 	if response.StatusCode != 200 {
 		return "", fmt.Errorf(
 			"HTTP GET %sxxxxxxx: HTTP %d: %s",
