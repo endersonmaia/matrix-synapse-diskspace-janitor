@@ -1,12 +1,3 @@
-// NOTE THIS WAS DOWNLAODED FROM https://cdn.jsdelivr.net/npm/chart.js
-// I was not able to figure out how to reproduce this build from the chartjs repo :(
-
-/**
- * Skipped minification because the original files appears to be already minified.
- * Original file: /npm/chart.js@4.1.2/dist/chart.umd.js
- *
- * Do NOT use SRI with dynamically generated files! More information: https://www.jsdelivr.com/using-sri-with-dynamic-files
- */
 /*!
  * Chart.js v4.1.2
  * https://www.chartjs.org
