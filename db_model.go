@@ -200,6 +200,7 @@ func (model *DBModel) DeleteStateGroupsState(stateGroupIds []int64, startAt int)
 				Errors:             errorCount,
 			}
 		}
+		close(toReturn)
 	}(stateGroupIds, startAt, toReturn)
 
 	return toReturn
