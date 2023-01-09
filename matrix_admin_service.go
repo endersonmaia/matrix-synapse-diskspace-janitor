@@ -88,10 +88,10 @@ func initMatrixAdmin(config *Config) *MatrixAdmin {
 // curl -H "Content-Type: application/json" -X DELETE "localhost:8008/_synapse/admin/v2/rooms/$roomid?access_token=xxxxxxxxx" \
 // 	--data '{ "block": false, "force_purge": true, "purge": true, "message": "This room is being cleaned, stand by..." }'
 
-func (admin *MatrixAdmin) DeleteRoom(roomId string) error {
+func (admin *MatrixAdmin) DeleteRoom(roomId string, ban bool) error {
 
 	deleteRequestBodyObject := DeleteRoomRequest{
-		Block:      false,
+		Block:      ban,
 		ForcePurge: true,
 		Purge:      true,
 		Message:    "This room is being cleaned, stand by...",

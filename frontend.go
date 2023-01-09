@@ -34,6 +34,7 @@ type FrontendApp struct {
 	Port              int
 	Domain            string
 	Router            *http.ServeMux
+	DB                *DBModel
 	HTMLTemplates     map[string]*template.Template
 	cssHash           string
 	basicURLPathRegex *regexp.Regexp
@@ -47,9 +48,17 @@ type MatrixRoom struct {
 	IdWithName string
 	Rows       int
 	Percent    int
+
+	Ban    bool
+	Status string
 }
 
-func initFrontend(config *Config) FrontendApp {
+type DeleteProgress struct {
+	Rooms                    []MatrixRoom
+	StateGroupsStateProgress int
+}
+
+func initFrontend(config *Config, db *DBModel) FrontendApp {
 
 	cssBytes, err := os.ReadFile(filepath.Join(".", "frontend", "static", "app.css"))
 	if err != nil {
@@ -62,6 +71,7 @@ func initFrontend(config *Config) FrontendApp {
 		Port:              config.FrontendPort,
 		Domain:            config.FrontendDomain,
 		Router:            http.NewServeMux(),
+		DB:                db,
 		HTMLTemplates:     map[string]*template.Template{},
 		basicURLPathRegex: regexp.MustCompile("(?i)[a-z0-9/?&_+-]+"),
 		base58Regex:       regexp.MustCompile("(?i)[a-z0-9_-]+"),
@@ -74,14 +84,43 @@ func initFrontend(config *Config) FrontendApp {
 
 		userIsLoggedIn := session.UserID != ""
 		if userIsLoggedIn {
+
+			deleteProgress, err := ReadJsonFile[DeleteProgress]("data/deleteRooms.json")
+			if err != nil {
+				(*session.Flash)["error"] = "an error occurred reading deleteRooms json"
+			}
+			if deleteProgress.Rooms != nil && len(deleteProgress.Rooms) > 0 {
+				app.buildPageFromTemplate(responseWriter, request, session, "deleting.html", deleteProgress)
+				return
+			}
+
 			if request.Method == "POST" {
+				toDelete := []MatrixRoom{}
 				for i := 0; i < 20; i++ {
 					roomId := request.PostFormValue(fmt.Sprintf("id_%d", i))
 					delete := request.PostFormValue(fmt.Sprintf("delete_%d", i))
 					ban := request.PostFormValue(fmt.Sprintf("ban_%d", i))
 
-					log.Printf("%s %s %s", roomId, delete, ban)
+					if roomId != "" && (delete != "" || ban != "") {
+						toDelete = append(toDelete, MatrixRoom{
+							Id:         roomId,
+							Ban:        ban != "",
+							IdWithName: fmt.Sprintf("%s: %s", roomId, app.getMatrixRoomNameWithCache(roomId)),
+							Status:     "...",
+						})
+					}
 				}
+				err := WriteJsonFile("data/deleteRooms.json", DeleteProgress{
+					Rooms: toDelete,
+				})
+				if err != nil {
+					(*session.Flash)["error"] = "an error occurred saving deleteRooms json"
+				}
+
+				go doRoomDeletes(app.DB)
+
+				http.Redirect(responseWriter, request, "/", http.StatusFound)
+				return
 			}
 
 			diskUsage, err := os.ReadFile("data/diskUsage.json")
@@ -117,10 +156,7 @@ func initFrontend(config *Config) FrontendApp {
 			bigRoomsRowCount := 0
 			for i, room := range biggestRooms {
 				// TODO cache this ??
-				name, err := matrixAdmin.GetRoomName(room.Id)
-				if err != nil {
-					log.Printf("error getting name for '%s':  %s\n", room.Id, err)
-				}
+				name := app.getMatrixRoomNameWithCache(room.Id)
 				biggestRooms[i] = MatrixRoom{
 					Id:         room.Id,
 					Name:       name,
@@ -404,4 +440,18 @@ func (app *FrontendApp) reloadTemplates() {
 		}
 	}
 
+}
+
+func (app *FrontendApp) getMatrixRoomNameWithCache(id string) string {
+	nameFromCache, hasNameFromCache := app.roomNameCache[id]
+	if hasNameFromCache {
+		return nameFromCache
+	}
+	name, err := matrixAdmin.GetRoomName(id)
+	if err != nil {
+		log.Printf("error getting name for '%s':  %s\n", id, err)
+	} else {
+		app.roomNameCache[id] = name
+	}
+	return name
 }

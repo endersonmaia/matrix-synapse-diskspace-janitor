@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"reflect"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -36,6 +38,7 @@ type DiskUsage struct {
 }
 
 var isRunningScheduledTask bool
+var isDoingDeletes bool
 var mutex sync.Mutex
 var matrixAdmin *MatrixAdmin
 
@@ -56,7 +59,7 @@ func main() {
 
 	db := initDatabase(&config)
 	matrixAdmin = initMatrixAdmin(&config)
-	frontend := initFrontend(&config)
+	frontend := initFrontend(&config, db)
 
 	log.Printf("🧹 matrix-synapse-diskspace-janitor is about to try to start listening on :%d\n", config.FrontendPort)
 	go frontend.ListenAndServe()
@@ -149,7 +152,7 @@ func runScheduledTask(db *DBModel, config *Config) {
 		}
 	}
 
-	err = WriteJsonFile[map[string]int]("data/stateGroupsStateRowCountByRoom.json", rowCountByRoom)
+	err = WriteJsonFile("data/stateGroupsStateRowCountByRoom.json", rowCountByRoom)
 	if err != nil {
 		log.Printf("ERROR!: runScheduledTask can't write data/stateGroupsStateRowCountByRoom.json: %s\n", err)
 	}
@@ -163,13 +166,148 @@ func runScheduledTask(db *DBModel, config *Config) {
 
 	janitorState.LastScheduledTaskRunUnixMilli = time.Now().UnixMilli()
 
-	err = WriteJsonFile[JanitorState]("data/janitorState.json", janitorState)
+	err = WriteJsonFile("data/janitorState.json", janitorState)
 	if err != nil {
 		log.Printf("ERROR!: runScheduledTask can't write data/janitorState.json: %s\n", err)
 	}
 
 	log.Println("runScheduledTask completed!")
 	isRunningScheduledTask = false
+}
+
+func doRoomDeletes(db *DBModel) {
+	if isDoingDeletes {
+		log.Println("doRoomDeletes(): isDoingDeletes already!")
+		return
+	}
+	isDoingDeletes = true
+	defer func() {
+		isDoingDeletes = false
+	}()
+
+	deleteProgress, err := ReadJsonFile[DeleteProgress]("data/deleteRooms.json")
+	if err != nil {
+		log.Println("doRoomDeletes(): Can't do room deletes because can't read deleteRooms.json")
+		return
+	}
+
+	if deleteProgress.Rooms == nil || len(deleteProgress.Rooms) == 0 {
+		log.Println("doRoomDeletes(): Can't do room deletes because no rooms to delete")
+		return
+	}
+
+	log.Printf("doRoomDeletes(): starting to delete %d rooms\n", len(deleteProgress.Rooms))
+
+	for _, room := range deleteProgress.Rooms {
+		err := matrixAdmin.DeleteRoom(room.Id, room.Ban)
+		if err != nil {
+			log.Printf("doRoomDeletes(): Can't do room deletes because deleting %s returned %s\n", room.Id, err)
+			return
+		}
+	}
+
+	log.Printf("doRoomDeletes(): waiting for %d rooms to be done deleting...\n", len(deleteProgress.Rooms))
+
+	isDoneWaitingForRoomDeletesToFinish := false
+	for !isDoneWaitingForRoomDeletesToFinish {
+
+		allRoomsDeletionComplete := true
+		for i, room := range deleteProgress.Rooms {
+			// TODO do something with the users that this returns? i.e. re-add them to the room later?
+			status, _, err := matrixAdmin.GetDeleteRoomStatus(room.Id)
+			if err != nil {
+				log.Printf("doRoomDeletes(): Can't do room deletes because GetDeleteRoomStatus('%s') returned %s\n", room.Id, err)
+				return
+			}
+			deleteProgress.Rooms[i] = MatrixRoom{
+				Id:         room.Id,
+				IdWithName: room.IdWithName,
+				Ban:        room.Ban,
+				Status:     status,
+			}
+
+			if status != "complete" {
+				allRoomsDeletionComplete = false
+			}
+		}
+
+		err = WriteJsonFile("data/deleteRooms.json", deleteProgress)
+		if err != nil {
+			log.Println("doRoomDeletes(): Can't do room deletes because can't write deleteRooms.json")
+			return
+		}
+
+		if allRoomsDeletionComplete {
+			isDoneWaitingForRoomDeletesToFinish = true
+		} else {
+			time.Sleep(time.Second * 5)
+		}
+	}
+
+	log.Printf("doRoomDeletes(): getting state group ids for %d rooms...\n", len(deleteProgress.Rooms))
+
+	allStateGroupsToDelete := []int64{}
+	for _, room := range deleteProgress.Rooms {
+		stateGroups, err := db.GetStateGroupsForRoom(room.Id)
+		if err != nil {
+			log.Printf("doRoomDeletes(): Can't do room deletes because getting state group ids for %s returned %s\n", room.Id, err)
+			return
+		}
+		allStateGroupsToDelete = append(allStateGroupsToDelete, stateGroups...)
+	}
+
+	sort.Slice(allStateGroupsToDelete, func(i, j int) bool {
+		return allStateGroupsToDelete[i] < allStateGroupsToDelete[j]
+	})
+
+	allStateGroupsToDeleteFile, err := os.OpenFile("data/stateGroupsToDelete.txt", os.O_CREATE|os.O_WRONLY, 0644)
+	for _, stateGroupId := range allStateGroupsToDelete {
+		fmt.Fprintf(allStateGroupsToDeleteFile, "%d\n", stateGroupId)
+	}
+	allStateGroupsToDeleteFile.Close()
+
+	log.Printf("doRoomDeletes(): deleting %d state groups from  state_groups_state...\n", len(allStateGroupsToDelete))
+
+	statusChannel := db.DeleteStateGroupsState(allStateGroupsToDelete, 0)
+	lastUpdateTime := time.Now()
+	for status := range statusChannel {
+		if time.Since(lastUpdateTime) > time.Second*5 {
+			lastUpdateTime = time.Now()
+			deleteProgress.StateGroupsStateProgress = int((float64(status.StateGroupsDeleted) / float64(len(allStateGroupsToDelete))) * float64(100))
+
+			log.Printf(
+				"doRoomDeletes(): %d/%d (%d rows) (%d errors) (%d%s)\n",
+				status.StateGroupsDeleted, len(allStateGroupsToDelete), status.RowsDeleted,
+				status.Errors, deleteProgress.StateGroupsStateProgress, "%",
+			)
+
+			err = WriteJsonFile("data/deleteRooms.json", deleteProgress)
+			if err != nil {
+				log.Println("doRoomDeletes(): Can't do room deletes because can't write deleteRooms.json")
+				return
+			}
+		}
+	}
+
+	log.Println("doRoomDeletes(): deleting from state_groups_state complete! now cleaning up state_groups...")
+
+	totalStateGroupRows := 0
+	for _, room := range deleteProgress.Rooms {
+		rowsDeleted, err := db.DeleteStateGroupsForRoom(room.Id)
+		if err != nil {
+			log.Printf("doRoomDeletes(): DeleteStateGroupsForRoom('%s') returned %s\n", room.Id, err)
+		}
+		totalStateGroupRows += int(rowsDeleted)
+	}
+
+	log.Printf("doRoomDeletes(): %d state_groups related rows deleted. \n", totalStateGroupRows)
+
+	err = os.Remove("data/deleteRooms.json")
+	if err != nil {
+		log.Printf("doRoomDeletes(): failed to remove deleteRooms.json: %s\n", err)
+	}
+
+	log.Println("doRoomDeletes(): completed successfully!!")
 }
 
 func validateConfig(config *Config) {

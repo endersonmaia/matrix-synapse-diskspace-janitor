@@ -1,0 +1,22 @@
+<div class="horizontal justify-center wrap">
+  <h3>deleting...</h3>
+
+  <div>
+  {{ range $i, $room := .Rooms }}
+    {{ if $room.Id }}
+      <div class="horizontal align-center">
+
+        <label for="ban_{{ $i }}" >BAN</span>
+        <input  id="ban_{{ $i }}" type="checkbox" disabled value="{{if $room.Ban }}on{{ end }}"></input>
+        <span> STATUS: {{ $room.Status }} &nbsp;  {{ $room.IdWithName }}</span>
+      </div>
+    {{ end }}
+  {{ end }}
+  </div>
+
+  {{ if .StateGroupsStateProgress > 0 }}
+      <p>
+        Progress of deleting rows from <code>state_groups_state</code>: {{ .StateGroupsStateProgress }}%
+      </p>
+  {{ end }}
+</div>
