@@ -4,7 +4,68 @@
 
 _toilets and boilers, boilers and toilets_
 
+![screenshot showing three pie charts, disk space,  disk usage by table, and disk usage by room. A form with a list of rooms  having DELETE and BAN checkboxes sits below the charts.](readme/screenshot.png)
 
+-------------
+
+> We did come up with some shell scripts to handle this, but it was an annoying recurring manual maintenance burden.  Due to the [complicated, multi-step nature of the cleanup process](https://picopublish.sequentialread.com/files/matrix-manual-room-bonk.txt),  I ended up creating an application to handle it instead of continuing to try to script it.  Yes, its probably overkill, but it was fun. And who knows, maybe it can be useful to someone else. 
+
+-------------
+
+## Configuration Overview
+
+
+#### `config.json`
+
+```
+{
+  "FrontendPort": 6712,
+  "FrontendDomain": "matrix-diskspace-janitor.cyberia.club",
+  "MatrixServerPublicDomain": "cyberia.club",
+  "MatrixURL": "http://localhost:8008",
+  "AdminMatrixRoomId": "!oAVmChLLsrnfaSubLP:cyberia.club",
+  "MatrixAdminToken": "syt_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "DatabaseType": "postgres",
+
+  "DatabaseConnectionString": 
+  "host=localhost port=5432 user=synapse_user password=xxxxxxxxxx database=synapse sslmode=disable",
+
+  "MediaFolder": "/var/lib/matrix-synapse",
+  "PostgresFolder": "/var/lib/postgresql"
+}
+```
+
+----------------------
+
+#### `FrontendDomain`
+
+This is the domain under which the janitor web application will be served.
+
+#### `MatrixServerPublicDomain`
+
+This is the domain part of matrix IDs on your homeserver. For example, my matrix ID is `@forestjohnson:cyberia.club` so I use `cyberia.club` as my `MatrixServerPublicDomain`. 
+
+#### `AdminMatrixRoomId`
+
+Users who are in the `AdminMatrixRoomId` private room will be able to log into the tool with their matrix account. (note, the account has to be on the same homeserver)
+
+----------------------
+
+
+It uses https://git.sequentialread.com/forest/config-lite for its configuration, so you can also use environment variables to configure it, for example, when you are using docker:
+
+```
+  blog-external-service2:
+    image: matrix-synapse-diskspace-janitor:test
+    restart: always
+    environment:
+      JANITOR_FRONTENDPORT: 6712
+      JANITOR_FRONTENDDOMAIN: 'matrix-diskspace-janitor.cyberia.club'
+      ... etc
+```
+
+
+## Origin Story
 
 Matrix-synapse (the matrix homeserver implementation) requires a postgres database server to operate. 
 It stores a lot of stuff in this postgres database, information about all the rooms that users on the server have joined, etc.
@@ -63,5 +124,5 @@ This is similar to the way that the [matrix-synapse message retention policies](
 
 In fact, probably helps explain why `state_groups_state` gets hundreds of millions of rows and takes up so much disk space: Nothing ever deletes from it!!
 
-
+We did come up with some shell scripts to handle this, but it was an annoying recurring manual maintenance burden.  Due to the [complicated, multi-step nature of the cleanup process](https://picopublish.sequentialread.com/files/matrix-manual-room-bonk.txt),  I ended up creating an application to handle it instead of continuing to try to script it.  Yes, its probably overkill, but it was fun. And who knows, maybe it can be useful to someone else. 
 

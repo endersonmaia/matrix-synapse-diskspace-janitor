@@ -139,8 +139,11 @@ func runScheduledTask(db *DBModel, config *Config, measureMediaSize bool, stateG
 		PostgresBytes: postgresBytes,
 	}
 
+	const 
+	const diskUsagePercent = 
+
 	log.Println("Saving data/diskUsage.json...")
-	err = WriteJsonFile[DiskUsage]("data/diskUsage.json", diskUsage)
+	err = WriteJsonFile("data/diskUsage.json", diskUsage)
 	if err != nil {
 		log.Printf("ERROR!: runScheduledTask can't write data/diskUsage.json: %s\n", err)
 	}
@@ -191,6 +194,8 @@ func runScheduledTask(db *DBModel, config *Config, measureMediaSize bool, stateG
 		log.Printf("ERROR!: runScheduledTask can't write data/janitorState.json: %s\n", err)
 	}
 
+
+	
 	log.Println("runScheduledTask completed!")
 	isRunningScheduledTask = false
 }
