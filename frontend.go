@@ -60,7 +60,11 @@ type DeleteProgress struct {
 
 func initFrontend(config *Config, db *DBModel) FrontendApp {
 
-	cssBytes, err := os.ReadFile(filepath.Join(".", "frontend", "static", "app.css"))
+	currentDirectory, err := os.Getwd()
+	if err != nil {
+		panic(errors.Wrap(err, "can't initFrontend because can't get working directory:"))
+	}
+	cssBytes, err := os.ReadFile(filepath.Join(currentDirectory, "frontend", "static", "app.css"))
 	if err != nil {
 		panic(errors.Wrap(err, "can't initFrontend because can't read cssBytes:"))
 	}
@@ -247,7 +251,7 @@ func initFrontend(config *Config, db *DBModel) FrontendApp {
 
 	app.reloadTemplates()
 
-	staticFilesDir := "./frontend/static"
+	staticFilesDir := filepath.Join(currentDirectory, "frontend/static")
 	log.Printf("serving static files from %s", staticFilesDir)
 	app.Router.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticFilesDir))))
 

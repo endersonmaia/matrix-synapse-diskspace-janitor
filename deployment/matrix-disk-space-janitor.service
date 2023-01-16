@@ -1,0 +1,26 @@
+# this file goes in /lib/systemd/system/matrix-diskspace-janitor.service
+# then run   systemctl daemon-reload 
+# and        systemctl enable --now matrix-diskspace-janitor.service
+
+# you can read the logs with  journalctl -u matrix-diskspace-janitor.service -n 100 --no-pager
+
+[Unit]
+Description=https://git.cyberia.club/cyberia/matrix-synapse-diskspace-janitor
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+
+# wait at least 5 seconds before restarting if it crashes
+RestartSec=5
+
+WorkingDirectory=/opt/matrix-diskspace-janitor
+
+ExecStart=/opt/matrix-diskspace-janitor/janitor
+
+User=caddy
+Group=caddy
+
+[Install]
+WantedBy=multi-user.target

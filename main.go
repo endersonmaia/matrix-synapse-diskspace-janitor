@@ -54,8 +54,17 @@ func main() {
 
 	validateConfig(&config)
 
-	os.MkdirAll("data", 0644)
-	os.MkdirAll("data/sessions", 0644)
+	currentDirectory, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	log.Printf(
+		"🧹 matrix-synapse-diskspace-janitor starting up with UID %d EUID %d GID %d EGID %d  workingDirectory '%s'\n",
+		os.Getuid(), os.Geteuid(), os.Getgid(), os.Getegid(), currentDirectory,
+	)
+
+	os.MkdirAll("data", 0755)
+	os.MkdirAll("data/sessions", 0755)
 
 	db := initDatabase(&config)
 	matrixAdmin = initMatrixAdmin(&config)
@@ -104,7 +113,7 @@ func runScheduledTask(db *DBModel, config *Config, measureMediaSize bool, stateG
 		log.Printf("ERROR!: runScheduledTask can't GetDBTableSizes: %s\n", err)
 	}
 	log.Println("Saving data/dbTableSizes.json...")
-	err = WriteJsonFile[[]DBTableSize]("data/dbTableSizes.json", tables)
+	err = WriteJsonFile("data/dbTableSizes.json", tables)
 	if err != nil {
 		log.Printf("ERROR!: runScheduledTask can't write data/dbTableSizes.json: %s\n", err)
 	}
@@ -138,9 +147,6 @@ func runScheduledTask(db *DBModel, config *Config, measureMediaSize bool, stateG
 		MediaBytes:    mediaBytes,
 		PostgresBytes: postgresBytes,
 	}
-
-	const 
-	const diskUsagePercent = 
 
 	log.Println("Saving data/diskUsage.json...")
 	err = WriteJsonFile("data/diskUsage.json", diskUsage)
@@ -194,8 +200,6 @@ func runScheduledTask(db *DBModel, config *Config, measureMediaSize bool, stateG
 		log.Printf("ERROR!: runScheduledTask can't write data/janitorState.json: %s\n", err)
 	}
 
-
-	
 	log.Println("runScheduledTask completed!")
 	isRunningScheduledTask = false
 }
