@@ -19,8 +19,8 @@ WorkingDirectory=/opt/matrix-diskspace-janitor
 
 ExecStart=/opt/matrix-diskspace-janitor/janitor
 
-User=caddy
-Group=caddy
+User=postgres
+Group=postgres
 
 [Install]
 WantedBy=multi-user.target
